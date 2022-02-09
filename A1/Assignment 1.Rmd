@@ -1,0 +1,340 @@
+---
+title: "Assignment 1"
+author: "Zhiwen Tan"
+date: "1/24/2022"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+```{=latex}
+The survival function is given by\\
+\begin{align*}
+    S(t) &= P(T > t))\\
+    &= P(log(T) > log(t)))\\
+    &= P(3 + 0.8Z + 2W > log(t)))\\
+    &= P(W > \frac{1}{2}(log(t)-3-0.8Z))\\
+    &= 1 - P(W \le \frac{1}{2}(log(t)-3-0.8Z))\\
+    &= 1 - \Phi(\frac{1}{2}(log(t)-3-0.8Z))
+\end{align*}\\
+Since we know $W$ has a standard extreme value distribution, so we know $\Phi$ is CDF of the standard extreme value distribution. Therefore, we can calculate the survival probabilities for treatment A and B.\\
+For a standard extreme value distribution, we know $W ~ EV(\mu = 0, \sigma = 1)$, thus, CDF $G(t) = 1- e^{-e^t}$.\\
+Now we have survival function\\
+\begin{align*}
+    S(t) &= 1 - (1 - (e^{-e^{\frac{1}{2}(log(t)-3-0.8Z)}})\\
+    &= e^{-e^{\frac{1}{2}(log(t)-3-0.8Z)}}
+\end{align*}\\
+To find the survival probabilities of the two treatments at 1 year and 5 years, we need to know the time unit. in this question, we have time to relapse in years, so we don't need to convert it month. Then we can plug the value t and z in this function. The results are shown as below.\\
+We can see the survival probability for new treatmetn is greater than standard treatment, and this is becasue the survival function is an exponential function with a negative power. The result means the probability of relapse in 1 year for standard treatment is 1 - 80\% = 20\%, the probability of relapse in 1 year for new treatment is 1 - 86\% = 14\%, the probability of relapse in 5 year for standard treatment is 1 - 61\% = 39\%, the probability of relapse in 5 year for new treatment is 1 - 72\% = 28\%. Now we can conclude that the new treatment is better than the standard treatment becasue the propotion of people relapses is less than the standard treatment.\\
+```
+```{r, echo=FALSE}
+survival <- function(t, z){
+  temp <- -exp(0.5*(log(t)-3-0.8*z))
+  s <- 1 - (1 - exp(temp))
+  return(s)
+}
+x <- matrix(NA,2,2)
+colnames(x) <- c("standard treatment", "new treatment")
+rownames(x) <- c("year 1", "year 5")
+x[1,1] <- survival(1, 0)
+x[1,2] <- survival(1, 1)
+x[2,1] <- survival(5, 0)
+x[2,2] <- survival(5, 1)
+print(x)
+```
+
+## Question 2
+
+```{=latex}
+\begin{itemize}
+    \item [(a)]
+    From lecture notes, we know the survival function for logmormal distribution T is\\
+    \begin{align*}
+        S(t) = 1 - \Phi(\frac{log(t)-\mu}{\sigma})\\
+    \end{align*}
+    Then we can use the survival function to calculate the hazard function. The Hazard is given by\\
+    \begin{align*}
+        h(t) &= \frac{f(t)}{S(t)}\\
+        &= \frac{-S'(t)}{S(t)}\\
+        &= \frac{\frac{d}{dt} (1 - \Phi(\frac{log(t)-\mu}{\sigma}))}{1 - \Phi(\frac{log(t)-\mu}{\sigma})}\\
+        &= \frac{-(0 -\frac{1}{t\sigma} \phi(\frac{log(t)-\mu}{\sigma}))}{1 - \Phi(\frac{log(t)-\mu}{\sigma})}\\
+        &= \frac{\frac{1}{t\sigma}\phi(\frac{log(t)-\mu}{\sigma})}{1 - \Phi(\frac{log(t)-\mu}{\sigma})}\\
+    \end{align*}
+    \item [(b)]
+        The standard normal distribution has a pdf\\
+    $f(y) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left( -\frac{1}{2}\left(\frac{y-\mu}{\sigma}\right)^{\!2}\,\right)$\\
+    Since we know for a log normal distribution T, $Y = logT$ where $Y$ in $Normal(\mu, \sigma^2)$. so we could derive the pdf of T from here\\
+    \begin{align*}
+        Y &= logT\\
+        T &= e^Y\\
+        F_T(t) &= P[T \le t]\\
+        &= P[e^y \le t]\\
+        &= P[y \le logt]\\
+        &= F_Y(logt)\\
+        f_T(t) &= \frac{d}{dt} F_Y(logt)\\
+        &= 1/t f_y(logt)\\
+        &= \frac{1}{t} \frac{1}{\sigma\sqrt{2\pi}} \exp\left( -\frac{1}{2}\left(\frac{logt-\mu}{\sigma}\right)^{\!2}\,\right)
+    \end{align*}
+    Now we have the pdf for T, then we need to get the CDF for T\\
+    \begin{align*}
+        S(t) &= 1 - F(t)\\
+        F(t) &= 1 - S(t)\\
+        &= 1 - (1 - \Phi(\frac{logt-\mu}{\sigma}))\\
+        &= \Phi(\frac{logt-\mu}{\sigma})
+    \end{align*}
+    We also know the survival function for T is\\
+    \begin{align*}
+        S(t) &= 1 - \Phi(\frac{logt-\mu}{\sigma})
+    \end{align*}
+    we know the median = 100 and 95 percentile = 300, so we can calculate $\mu$ and $\sigma$. Since $log(t) = \mu_{lognormal} + \sigma*N(0,1)$, and $\mu_{normal} = e^\mu_{lognormal}$, so we we have $\mu_{lognormal} = log(\mu_{normal}) = log(100)$, take this in, we have $log(300) = log(100) + \sigma*1.65$ which is $\sigma = \frac{log(300) - log(100)}{1.65} = 0.668$\\
+    \begin{align}
+        f_T(t) &= \frac{1}{t} \frac{1}{0.668\sqrt{2\pi}} \exp\left( -\frac{1}{2}\left(\frac{logt-log(100)}{0.668}\right)^{\!2}\,\right) \label{1} \\
+        F_T(t) &= \Phi(\frac{logt-log(100)}{0.668}) \label{2}\\
+        S(t) &= 1 - \Phi(\frac{logt-log(100)}{0.668}) \label{3}\\
+        h(t) &= \frac{\phi(\frac{log(t)-log(100)}{0.668})}{1 - \Phi(\frac{log(t)-log(100)}{0.668})} \label{4}\\
+        T &\sim lognormal(log100, 0.668)
+    \end{align}
+    \item [(c)]
+    The pdf, survival function and hazard function are shown as below
+\end{itemize}
+
+```
+```{r, echo = FALSE}
+# plot pdf
+par(mfrow=c(2,2))
+x<-seq(0,500, by=1)
+probability <- dlnorm(x, log(100), 0.668)
+plot(x, probability, type = "l", main = "pdf")
+# plot survival function
+survival_rate <- 1 - pnorm((log(x)-log(100))/0.668)
+plot(x, survival_rate, type = "l", main = "survival function")
+# harzrd function
+hazard_rate <- probability/survival_rate
+plot(x,hazard_rate, type = "l", main = "hazard function")
+```
+\newpage
+
+## Question 3
+
+```{=latex}
+\begin{itemize}
+    \item [(a)]
+    Let $W \sim logistic(0,1)$, then $G(w) \sim \frac{e^w}{1 + e^w}$.\\ let $Y \sim logistic(\mu, \sigma)$, then\\
+    \begin{align*}
+        F_Y(y) &= P(Y \le y)\\
+        &= P(\frac{Y-\mu}{\sigma} \le \frac{y-\mu}{\sigma}) \tag{1}\\
+    \end{align*}
+    now let $W = \frac{Y-\mu}{\sigma}$, then we have\\
+    \begin{align*}
+        F_W(w) &= P(W \le w)\\
+        &= P(\frac{Y-\mu}{\sigma} \le w)\\
+        &= P(Y \le \mu + \sigma w)\\
+        &= F_Y(\mu + \sigma w)\\
+        &= \frac{e^w}{1 + e^w}
+    \end{align*}
+    we can see this is the cdf of $logistic(0,1)$. therefore, we have\\
+    \begin{align*}
+        F_Y(y) &= P(W \le \frac{y-\mu}{\sigma}) \tag{continue from (1)}\\
+        &= G(\frac{y-\mu}{\sigma})
+    \end{align*}
+    Therefore, $Y \sim logistic(\mu, \sigma)$ is a location-scale distribution. Since $Y = logT$, we can conclude that T has a log location-scale distribution 
+    \item [(b)]
+    We could first calculate the survival function using $\mu$ and $\sigma$ 
+    \begin{align*}
+        Y &= logT\\
+        T &= e^Y\\
+        F_T(t) &= P[T \le t]\\
+        &= P[e^y \le t]\\
+        &= P[y \le logt]\\
+        &= F_Y(logt)\\
+        &= \frac{e^\frac{logt-\mu}{\sigma}}{1+e^\frac{logt-\mu}{\sigma}}\\
+    \end{align*}
+    Since we know $S(t) = 1 - F(t)$, so we have\\
+    \begin{align*}
+        S(t) &= 1 - \frac{e^\frac{logt-\mu}{\sigma}}{1+e^\frac{logt-\mu}{\sigma}}\\
+        &= \frac{1 + e^\frac{logt-\mu}{\sigma}}{1+e^\frac{logt-\mu}{\sigma}} - \frac{e^\frac{logt-\mu}{\sigma}}{1+e^\frac{logt-\mu}{\sigma}}\\
+        &= \frac{1}{1+e^\frac{logt-\mu}{\sigma}}
+    \end{align*}
+    Then let $\lambda = e^\frac{-\mu}{\sigma}$, and $\alpha = \frac{1}{\sigma}$, then we have\\
+    \begin{align*}
+        S(t) &= \frac{1}{1 + e^\frac{logt}{\sigma}e^\frac{-\mu}{\sigma}}\\
+        &= \frac{1}{1 + t^\frac{1}{\sigma}e^\frac{-\mu}{\sigma}}\\
+        &= \frac{1}{1 + \lambda t^\alpha}
+    \end{align*}
+    Now we have the desired S(t). For h(t), we only need to use the formula $h(t) = \frac{-S'(t)}{S(t)}$.\\
+    \begin{align*}
+        S'(t)&= \frac{d}{dt}\frac{1}{1 + \lambda t^\alpha}\\
+        &= -\frac{\frac{d}{dt}(1 + \lambda t^\alpha)}{(1 + \lambda t^\alpha)^2}\\
+        &= -\frac{\lambda\frac{d}{dt}t^\alpha}{(1 + \lambda t^\alpha)^2}\\
+        &= -\frac{\alpha\lambda t^{\alpha-1}}{(1 + \lambda t^\alpha)^2}\\
+        h(t) &= \frac{-S'(t)}{S(t)}\\
+        &= \frac{\frac{\alpha\lambda t^{\alpha-1}}{(1 + \lambda t^\alpha)^2}}{\frac{1}{1 + \lambda t^\alpha}}\\
+        &= \frac{\alpha\lambda t^{\alpha-1}}{1 + \lambda t^\alpha}
+    \end{align*}
+    Now we have shown T can be written as $h(t) = \frac{\alpha\lambda t^{\alpha-1}}{1 + \lambda t^\alpha}$, and $S(t) = \frac{1}{1 + \lambda t^\alpha}$
+\end{itemize}
+```
+```{r}
+```
+
+## Question 4
+
+```{=latex}
+Since T is a continuous random variable, the we will have the pdf and cdf for this T which denote as $f_T(t)$ and $F_T(t)$, From here, we can get calculate E(T).\\
+\begin{align*}
+    E(T) &= \int_{0}^{\infty} tf_T(t) dt\\
+    &= \int_{0}^{\infty} -t\frac{d}{dt}S(t) \tag{since $f_T(t) = -\frac{d}{dt}S(t)$}\\
+    &= -tS(t)\Big|_0^\infty - \int_{0}^{\infty} S(t) \frac{d}{dt}(-t) dt \tag{integral by part}\\
+    &= 0 + \int_{0}^{\infty} S(t) dt \tag{we know $lim_{t \rightarrow \infty}tS(t) = 0$}\\
+    &= \int_{0}^{\infty} S(t) dt
+\end{align*}
+Therefore, we have proved, $E(T) = \int_{0}^{\infty} S(t) dt$.
+```
+
+\newpage
+
+## Question 5
+
+```{=latex}
+\begin{itemize}
+    \item [(a)]
+    To find survival function $S(t)$, we could use the formula $S(t) = e^{-H(t)}$. Now, we need to find $H(t)$, since this is a piece-wise function, wen need to sum up all intervals to get H(t). Then for each interval $\tau_{i-1} \le t \le \tau_i$\\
+    \begin{align*}
+        H(t) &= \int_{0}^{t} h(t) dt\\
+        &= \int_{0}^{\tau_1} \theta_1 dt+ \int_{\tau_1}^{\tau_2} \theta_2 dt + ... + \int_{\tau_{k-2}}^{\tau_{k-1}} \theta_{k-1} dt + \int_{\tau_{k-1}}^{t} \theta_k dt\\
+        &= \sum_{j = 1}^{i - 1} \int_{\tau_{j-1}}^{\tau_j} \theta_j dt + \int_{\tau_{i-1}}^{t} \theta_i dt\\
+        &= \sum_{j = 1}^{i - 1} \theta_j(\tau_j - (\tau_{j - 1})) + \theta_i(t - (\tau_{i - 1}))
+    \end{align*}
+    Then we can calculate $S(t)$ \\
+    \begin{align*}
+        S(t) &= e^{-H(t)}\\
+        &= exp[{-\sum_{j = 1}^{i - 1} \theta_j(\tau_j - (\tau_{j - 1})) - \theta_i(t - (\tau_{i - 1}))}]
+    \end{align*}
+    Now we have the desired survival function.
+    
+    \item [(b)]
+    We need to find the actual survival curve first\\
+     \begin{align*}
+        H(t) &= \int_{0}^{0.5} 1 dt+ \int_{0.5}^{1.5} \frac{1}{2} dt + \int_{1.5}^{t} \frac{1}{3} dt\\
+        &= t\Big|_0^{0.5} + \frac{1}{2}t\Big|_{0.5}^{1.5} + \frac{1}{3}t\Big|_{1.5}^{t}\\
+        &= 0.5 + 0.5 + \frac{t}{3} - 0.5\\
+        &= \frac{1}{2} + \frac{t}{3}\\
+        S(t) &= e ^ {-(\frac{1}{2} + \frac{t}{3})}
+    \end{align*}
+    for harzard function, we could just plug numbers in to the given $h(t)$\\
+    Now we have two plots below shown hazard function and survival function\\
+\end{itemize}
+```
+```{r, echo = FALSE}
+x <- seq(0, 5, by=0.01)
+fx <- ifelse(x >= 0 & x < 0.5, 1,
+   ifelse(x >= 0.5 & x < 1.5,  0.5,
+   ifelse(x >= 1.5, 1/3, 0)))
+par(mfrow=c(1,2))
+# hazard function
+plot(x, fx, main = "hazard function", type = "l")
+# survival function 
+survival <- exp(-(1/2 + x/3))
+plot(x, survival, main = "Survival function", type = "l")
+```
+```{=latex}
+from the above plots, we can see even though the hazard function is peicewise,the survival function is still continuous.\\
+\begin{itemize}
+    \item [(c)]
+    If T is a piece wise exponential distribution, then we know the exact hazard rate (h(t)) on each interval. From part (a), we know the cumulative hazard ratio is \\
+    \begin{align*}
+        H(t) = \sum_{j = 1}^{i - 1} \theta_j(\tau_j - (\tau_{j - 1})) + \theta_i(t - (\tau_{i - 1}))
+    \end{align*}
+    because the first part\\
+    \begin{align*}
+        \sum_{j = 1}^{i - 1} \theta_j(\tau_j - (\tau_{j - 1}))
+    \end{align*}
+    is a function that not related to x, so we could see this part as a constant $c_1$.\\
+    Then we have\\
+    \begin{align*}
+        H(t) = c_1 + \theta_i(t - (\tau_{i - 1}))
+    \end{align*}
+    From here, we can see the second term can be rewritten to \\
+    \begin{align*}
+        \theta_i t - \theta_i(\tau_{i - 1})
+    \end{align*}
+    since the $\theta_i(\tau_{i - 1})$ is not a function of t, so we could let this part equals to $c_2$.\\
+    Then we have\\
+    \begin{align*}
+        H(t) = c_1 + \theta_i t - c_2
+    \end{align*}
+    combine c1 and c2 to get a constant c, then we have\\
+    \begin{align*}
+        H(t) = c + \theta_i t
+    \end{align*}
+    Now, the survival function is just $S(t) = e^{-H(t)}$, so in our case, the survival function can be written as\\
+    \begin{align*}
+        S(t) &= e^{-(c + \theta_i t)}\\
+        &= e^{-c} e^{-\theta_i t}\\
+        &= a e^s \tag{let $a = e^-c$, and $s = -\theta_i t$}
+    \end{align*}
+    From here we can see $S(t)$ is just an exponential function. Since an exponential function is continuous, so know $S(t)$ is continuous, this means T is a continuous random variable.
+\end{itemize}
+```
+
+## Appendix
+
+### Question 1 
+
+survival function calculation
+```{r, eval=FALSE}
+survival <- function(t, z){
+  temp <- -exp(0.5*(log(t)-3-0.8*z))
+  s <- 1 - (1 - exp(temp))
+  return(s)
+}
+x <- matrix(NA,2,2)
+colnames(x) <- c("standard treatment", "new treatment")
+rownames(x) <- c("year 1", "year 5")
+x[1,1] <- survival(12, 0)
+x[1,2] <- survival(12, 1)
+x[2,1] <- survival(60, 0)
+x[2,2] <- survival(60, 1)
+print(x)
+```
+
+### Question 2
+
+plots for question 2
+```{r, eval=FALSE}
+# plot pdf
+# plot pdf
+par(mfrow=c(2,2))
+x<-seq(0,500, by=1)
+probability <- dlnorm(x, log(100), 0.668)
+plot(x, probability, type = "l", main = "pdf")
+# plot survival function
+survival_rate <- 1 - pnorm((log(x)-log(100))/0.668)
+plot(x, survival_rate, type = "l", main = "survival function")
+# harzrd function
+hazard_rate <- probability/survival_rate
+plot(x,hazard_rate, type = "l", main = "hazard function")
+```
+
+### Question 5
+
+harzard function and survival function plot
+```{r, eval=FALSE}
+x <- seq(0, 5, by=0.01)
+fx <- ifelse(x >= 0 & x < 0.5, 1,
+   ifelse(x >= 0.5 & x < 1.5,  0.5,
+   ifelse(x >= 1.5, 1/3, 0)))
+par(mfrow=c(1,2))
+# hazard function
+plot(x, fx, main = "hazard function", type = "l")
+# survival function 
+survival <- exp(-(1 + (x^2)/3 - x/2))
+plot(x, survival, main = "Survival function", type = "l")
+```
