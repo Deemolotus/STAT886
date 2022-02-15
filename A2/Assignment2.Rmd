@@ -211,7 +211,9 @@ summary(fit_km3)
 summary(fit_km2)
 summary(fit_km4)
 ```
-From the first summary, we can see the estimate median is between T=45 and T=49, so the approximated median T would be 49 because the survival rate at T=49 is the greatest number that smaller than 0.5. For two drug group, we can see from the plot in b) that at time 60, the survival probability and confidence interval should be the same as T=49, so we have approximate plain CI: (0.2294, 0.733), and log-log CI:(0.22410, 0.699). For triple drug group, T = 60 is in between T=48 and T=80, so simile as above, we have CI at T=60 = CI at T=60, therefore, we have approximate plain CI: (0.4199, 0.874) and log-log CI: ( 0.3771, 0.823)
+From the first summary, we can see the estimate median for two drug group is between T=45 and T=49, so the approximated median T would be 49 because the survival rate at T=49 is the greatest number that smaller than 0.5. For triple drug group, we can see the estimate median is between T=85 and T=90, so the approximated median T would be 90. 
+
+For two drug group, we can see from the plot in b) that at time 60, the survival probability and confidence interval should be the same as T=49, so we have approximate plain CI: (0.2294, 0.733), and log-log CI:(0.22410, 0.699). For triple drug group, T = 60 is in between T=48 and T=80, so simile as above, we have CI at T=60 = CI at T=60, therefore, we have approximate plain CI: (0.4199, 0.874) and log-log CI: ( 0.3771, 0.823)
 
 c) To plot cumulative hazard function, we just need to specify the parameter cumhaz=T in plot function. because the default ctype in survfit function is NA estimate, so we don't need to change the code too much. 
 
