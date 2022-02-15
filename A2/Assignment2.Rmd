@@ -149,8 +149,8 @@ knitr::include_graphics("Page4.png")
     we know $\hat{\mu} =$ area under $\hat{S}(t)$, so we can use the data from part b to calculate the mean\\
     \begin{align*}
         \hat{\mu} &= a_1 + \hat{S}(a_1t)(a_2 - a_1) + ... + \hat{S}(a_{k-1}t)(a_k - a_{k-1})\\
-        &= 3 + 0.9*1 + 0.8*2 + 0.6*3 + 0.5*4 + 0\\
-        &= 8.7
+        &= 3 + \frac{8}{9}*1 + \frac{7}{9}*2 + \frac{5}{9}*3 + \frac{4}{9}*4 + 0\\
+        &= 8.9
     \end{align*}
     we can see the result are not exactly the same, this may because we are assuming the survival time has exponetial distribution, but we don't make any assumption here. Also, we can see most of the censoring happends to the end of the study, so this will cause the mean estimation in the mle method be greater. in addition, the mle method will calculate integral of S(t) from 0 to $\infty$, this can also the cause a greater estimation.  Overall, this nonparametric estimate seems agree with the corresponding parametric estimate.
     \item[d)] 
