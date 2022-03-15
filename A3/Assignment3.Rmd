@@ -74,7 +74,7 @@ log(t)")
 lines(seq(0,7,0.1),seq(-3.5,3.5,0.1), lty=2)
 ```
 
-b) 
+b) From the P-P plot, the difference between weibull and exponential extimation are very small. all pattern are the same.
 
 ```{r, echo=F}
 fit.weib <- survreg(Surv(time, status)~1, data = data)
