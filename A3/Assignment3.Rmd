@@ -56,13 +56,13 @@ CIL <- exp(-exp(CIlogU))
 CI <- c(CIL, CIU)
 CI
 ```
-
+\newpage
 ## Question 2
 
 ```{=latex}
 a) If weibull distribution fits well, then the Q-Q plot for $log(-log(Skm(t))) vs log(t)$ should be show an approximatly linear relationship.However, form the plot below, we can see the Q-Q plot is not very linear, this means weibull distribution may not fit the data very well.
 ```
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.height=5}
 time <- c(2.5, 4.1, 4.6, 6.4, 6.7, 7.4, 7.6, 7.7, 7.8, 8.8, 13.3, 13.4, 18.3, 19.7, 21.9, 24.7, 27.5, 29.7, 30.1, 32.9, 33.5, 35.4, 37.7, 40.9, 42.6, 45.4, 48.5, 48.9, 60.4, 64.4, 66.4)
 status <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 data <- as.data.frame(cbind(time,status))
@@ -74,9 +74,9 @@ log(t)")
 lines(seq(0,7,0.1),seq(-3.5,3.5,0.1), lty=2)
 ```
 
-b) From the P-P plot, the difference between weibull and exponential extimation are very small. all pattern are the same.
+b) From the P-P plot, the difference between weibull and exponential estimation are very small and all patterns are similar. From the third plot, we can also see the survival curve for weibull and exponential distribution are very close to each other. However, we can see none of the P-P plot shows a linear pattern and we can also see neither weibull nor exponential distribution can give very accurate estimation between t=5 to t=40. Therefore, exponential distribution is not good enough for the data.
 
-```{r, echo=F}
+```{r, echo=F, fig.height=4}
 fit.weib <- survreg(Surv(time, status)~1, data = data)
 sig1<-fit.weib$scale
 mu1<-fit.weib$coef
@@ -100,11 +100,72 @@ lines(seq(0,1,0.1),seq(0,1,0.1), lty=2)
 par(mfrow=c(1,1))
 t<-0:175
 st.weib<-exp(-exp((log(t)-mu1)/sig1))
-st.exp<-exp(-exp(log(t)-mu1))
+st.exp<-exp(-exp(log(t)-mu2))
 plot(fit,xlab="time",
      ylab="Estimated S(t)",main="Advanced non-Hodgkin’s Lymphoma", 
      conf.int=F,lty=1,lwd=2)
-lines(t,st.weib,lty=2,lwd=2)
-lines(t,st.exp,lty=5,lwd=2)
-legend(100, 0.9, c("Kaplan-Meier", "Weibull", "Exponential"), lty=c(1,2,5))
+lines(t,st.weib,lty=2,lwd=2, col=2)
+lines(t,st.exp,lty=5,lwd=2, col=3)
+legend("bottomleft", c("Kaplan-Meier", "Weibull", "Exponential"), 
+       col=c(1,2,3), lty=c(1,2,5))
 ```
+
+c) From the P-P plot, we can see the points are more closer to the line. therefore, even though the data itself is not perfect and the P-P plot does not show a clear linear pattern, the log normal distribution fit is still better than weibull and exponential distribution. From the second plot, we can clear see the log normal distribution survival curve is more closer to the KM curve compare to exponential and weibull distribution. To conclude, Weibull and exponential model fits the data reasonably well for small and large survival times, but they do not fit so well for intermediate survival times. log normal model fits the data better in the entire range.
+
+```{r, echo=F, fig.height=8.5}
+par(mfrow=c(2,1))
+
+fit.lognm<-survreg(Surv(time,status)~1,data=data, dist="lognormal")
+mu3<-fit.lognm$coeff
+sig3<-fit.lognm$scale
+sf.lognm<-1-pnorm((log(time)-mu3)/sig3)
+plot(sf.km, sf.lognm, main="P-P Plot: LogNormal vs Kaplan-Meier")
+lines(seq(0,1,0.1),seq(0,1,0.1), lty=2)
+
+t<-0:175
+st.weib<-exp(-exp((log(t)-mu1)/sig1))
+st.exp<-exp(-exp(log(t)-mu2))
+st.lognm<-1-pnorm((log(t)-mu3)/sig3)
+plot(fit,xlab="time",
+     ylab="Estimated S(t)",main="Advanced non-Hodgkin’s Lymphoma", 
+     conf.int=F,lty=1,lwd=2)
+lines(t,st.weib,lty=2,lwd=2, col=2)
+lines(t,st.exp,lty=5,lwd=2, col=3)
+lines(t,st.lognm,lty=7,lwd=2, col=4)
+legend("bottomleft", c("Kaplan-Meier", "Weibull", "Exponential", "lognormal"), 
+       col=c(1,2,3,4), lty=c(1,2,5,7))
+```
+
+\newpage
+## Question 3
+
+```{=latex}
+a) To test equality of failure time distributions at stress levels 850 and 950 $N/mm^2$, we need to test $S_1(t) = S_2(t)$. The first step is to test $H_0: \sigma_1 = \sigma_2$, becasue R code will only provide $\phi$, so wwe need to check if $H_0: \phi_1 = \phi_2$. To test this we need to fit a all model and two separate model for two levels. then we can get the loglike(model) value, add this value together for 859 and 950 levels and minus the all model, we get 0.34 with a p-value 0.31. this means we can not reject the $H_0$, that is $\sigma_1 = \sigma_2$. The next step is to check $H_0: \mu_1 = \mu_2$. becasue we already have the model, so we can just use $loglike(model) - loglike(intercept)$ to get teh observed value which equals to 33.68. the p-value is 6.5e-09, this can be obtained from the all model. because 6.5e-09 < 0.05, so we can reject the null hypothesis. this means $\mu_1 != \mu_2$. The test suggest that for describing the survival times of the 2 groups, we should consider a Weibull model with $\sigma_1 = \sigma_2$, but $\mu_1 != \mu_2$.
+```
+
+```{r, echo = F}
+data<-read.table("p31.txt", header=T)
+data1 <- data[data$stress != 750,]
+fitall <- survreg(Surv(time, status)~as.factor(stress), data = data1)
+fit1 <- survreg(Surv(time, status)~1, data = data1[data1$stress == 850,])
+fit2 <- survreg(Surv(time, status)~1, data = data1[data1$stress == 950,])
+print(summary(fitall))
+print(summary(fit1))
+print(summary(fit2))
+# Test on phi
+lambda_obs <- 2*(fit1$loglik[2] + fit2$loglik[2] - fitall$loglik[2])
+cat("Observed value is", lambda_obs, "\n")
+sigmap <- pchisq(1,df=1, lower.tail = F)
+cat("p-value = ", sigmap, "\n")
+# Test on mu
+mu_obs <- 2*(fitall$loglik[2] - fitall$loglik[1])
+cat("Observed value is", mu_obs, "\n")
+cat("p-value = 6.5e-09 ")
+```
+
+b) 
+
+
+
+
+
