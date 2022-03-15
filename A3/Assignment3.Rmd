@@ -1,0 +1,110 @@
+---
+title: "Assignment 3"
+author: "Zhiwen Tan"
+date: "3/14/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+```{=latex}
+a)
+To get the 95\% confidence interval for median survival time, that is find $t_{0.5}$. We first need to fit a Weibull model for the data at stress level $750 N/mm^2$, the result below is the model fit result. Then we have $\hat{\sigma}$, $\hat{\mu}$ and estimate $\hat{Var}$.Then let $Y = logT$, and we can calculate $y_{0.5}$. After this step, we can calculate the $Var(\hat{y_{0.5}})$. Now, we can use 95\% CI for $y_{0.5}$. Finally, we can use $t_{0.5} = exp(y_{0.5})$ to get 95\% confidence interval for median($t_0.5$) is [5142.356, 14100.130].
+```
+
+```{r, echo=F}
+library(survival)
+data<-read.table("p31.txt", header=T)
+data <- data[data$stress == 750,]
+x<-data$time
+delta<-data$status
+fit.weib<- survreg(Surv(x, delta)~1)
+summary(fit.weib)
+
+y <- log(-log(0.5))
+y_mid <- fit.weib$coef - y*fit.weib$scale
+vary_mid <- as.numeric(t(matrix(c(1, y*fit.weib$scale))) %*% 
+                         as.matrix(fit.weib$var) %*% 
+                         matrix(c(1, y*fit.weib$scale)))
+CIL <- exp(y_mid - 1.96*sqrt(vary_mid))
+CIU <- exp(y_mid + 1.96*sqrt(vary_mid))
+CI <- c(CIL, CIU)
+CI
+```
+
+```{=latex}
+b)
+To get the confidence interval for the probability that the type of spring survives over 6000 thousand cycles at the stress level $750 N=mm^2$. that is find the $S(6000)$. The first step is to find the CI for $log[-log(S(t))]$, this is equal to $(log(t)-\mu)e^{-\phi}$. Then we can find $var((log(t)-\mu)e^{-\phi})$ using $\delta$-method. Now, we have the 95\% CI for $log[-log(S(6000))]$, Then we can calculate $CIl$ and $CIu$ by using $exp(-exp(\hat{\psi_u}))$ and $exp(-exp(\hat{\psi_l}))$. Finally, we can get the result 95\% CI is [0.108, 0.550]
+```
+
+```{r, echo=F}
+# b) 
+sig<-fit.weib$scale
+mu<-fit.weib$coef
+phi <- log(sig)
+var1 <- matrix(c(-exp(-phi), -(log(6000)-mu)*-exp(-phi)))
+var_loglog <- t(var1) %*% fit.weib$var %*% var1
+loglog_st <- (log(6000)-mu)*-exp(-phi)
+CIlogL <- loglog_st - 1.96*sqrt(var_loglog)
+CIlogU <- loglog_st + 1.96*sqrt(var_loglog)
+CIU <- exp(-exp(CIlogL))
+CIL <- exp(-exp(CIlogU))
+CI <- c(CIL, CIU)
+CI
+```
+
+## Question 2
+
+```{=latex}
+a) If weibull distribution fits well, then the Q-Q plot for $log(-log(Skm(t))) vs log(t)$ should be show an approximatly linear relationship.However, form the plot below, we can see the Q-Q plot is not very linear, this means weibull distribution may not fit the data very well.
+```
+```{r, echo=FALSE}
+time <- c(2.5, 4.1, 4.6, 6.4, 6.7, 7.4, 7.6, 7.7, 7.8, 8.8, 13.3, 13.4, 18.3, 19.7, 21.9, 24.7, 27.5, 29.7, 30.1, 32.9, 33.5, 35.4, 37.7, 40.9, 42.6, 45.4, 48.5, 48.9, 60.4, 64.4, 66.4)
+status <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+data <- as.data.frame(cbind(time,status))
+fit <- survfit(Surv(time, status)~1)
+llt <- log(-log(fit$surv))
+lt <- log(time)
+plot(lt,llt,main="Q-Q Plot: log(-log(Skm(t))) vs
+log(t)")
+lines(seq(0,7,0.1),seq(-3.5,3.5,0.1), lty=2)
+```
+
+b) 
+
+```{r, echo=F}
+fit.weib <- survreg(Surv(time, status)~1, data = data)
+sig1<-fit.weib$scale
+mu1<-fit.weib$coef
+time<-fit$time
+sf.weib<-exp(-exp((log(time)-mu1)/sig1))
+
+fit.exp <- survreg(Surv(time, status)~1, dist = "exp", data = data)
+mu2 <- fit.exp$coef
+sf.exp <- exp(-exp((log(time)-mu2)))
+
+sf.km<-fit$surv
+
+par(mfrow=c(1,2))
+plot(sf.km,sf.weib,main="P-P Plot: Weibull vs
+Kaplan-Meier")
+lines(seq(0,1,0.1),seq(0,1,0.1), lty=2)
+plot(sf.km, sf.exp, main="P-P Plot: Exponential vs
+Kaplan-Meier")
+lines(seq(0,1,0.1),seq(0,1,0.1), lty=2)
+
+par(mfrow=c(1,1))
+t<-0:175
+st.weib<-exp(-exp((log(t)-mu1)/sig1))
+st.exp<-exp(-exp(log(t)-mu1))
+plot(fit,xlab="time",
+     ylab="Estimated S(t)",main="Advanced non-Hodgkin’s Lymphoma", 
+     conf.int=F,lty=1,lwd=2)
+lines(t,st.weib,lty=2,lwd=2)
+lines(t,st.exp,lty=5,lwd=2)
+legend(100, 0.9, c("Kaplan-Meier", "Weibull", "Exponential"), lty=c(1,2,5))
+```
