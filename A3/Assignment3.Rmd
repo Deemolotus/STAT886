@@ -26,7 +26,7 @@ fit.weib<- survreg(Surv(x, delta)~1)
 summary(fit.weib)
 
 y <- log(-log(0.5))
-y_mid <- fit.weib$coef - y*fit.weib$scale
+y_mid <- fit.weib$coef + y*fit.weib$scale
 vary_mid <- as.numeric(t(matrix(c(1, y*fit.weib$scale))) %*% 
                          as.matrix(fit.weib$var) %*% 
                          matrix(c(1, y*fit.weib$scale)))
@@ -48,7 +48,7 @@ mu<-fit.weib$coef
 phi <- log(sig)
 var1 <- matrix(c(-exp(-phi), -(log(6000)-mu)*-exp(-phi)))
 var_loglog <- t(var1) %*% fit.weib$var %*% var1
-loglog_st <- (log(6000)-mu)*-exp(-phi)
+loglog_st <- (log(6000)-mu)/sig
 CIlogL <- loglog_st - 1.96*sqrt(var_loglog)
 CIlogU <- loglog_st + 1.96*sqrt(var_loglog)
 CIU <- exp(-exp(CIlogL))
@@ -63,8 +63,11 @@ CI
 a) If weibull distribution fits well, then the Q-Q plot for $log(-log(Skm(t))) vs log(t)$ should be show an approximatly linear relationship.However, form the plot below, we can see the Q-Q plot is not very linear, this means weibull distribution may not fit the data very well.
 ```
 ```{r, echo=FALSE, fig.height=5}
-time <- c(2.5, 4.1, 4.6, 6.4, 6.7, 7.4, 7.6, 7.7, 7.8, 8.8, 13.3, 13.4, 18.3, 19.7, 21.9, 24.7, 27.5, 29.7, 30.1, 32.9, 33.5, 35.4, 37.7, 40.9, 42.6, 45.4, 48.5, 48.9, 60.4, 64.4, 66.4)
-status <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+time <- c(2.5, 4.1, 4.6, 6.4, 6.7, 7.4, 7.6, 7.7, 7.8, 8.8, 13.3, 13.4, 18.3, 
+          19.7, 21.9, 24.7, 27.5, 29.7, 30.1, 32.9, 33.5, 35.4, 37.7, 40.9, 
+          42.6, 45.4, 48.5, 48.9, 60.4, 64.4, 66.4)
+status <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 
+            0, 0, 0, 0, 0, 0, 0, 0, 0)
 data <- as.data.frame(cbind(time,status))
 fit <- survfit(Surv(time, status)~1)
 llt <- log(-log(fit$surv))
@@ -147,6 +150,7 @@ a) To test equality of failure time distributions at stress levels 850 and 950 $
 data<-read.table("p31.txt", header=T)
 data1 <- data[data$stress != 750,]
 fitall <- survreg(Surv(time, status)~as.factor(stress), data = data1)
+fit0 <- survreg(Surv(time, status)~1, data = data[data$stress == 750,])
 fit1 <- survreg(Surv(time, status)~1, data = data1[data1$stress == 850,])
 fit2 <- survreg(Surv(time, status)~1, data = data1[data1$stress == 950,])
 print(summary(fitall))
@@ -154,18 +158,412 @@ print(summary(fit1))
 print(summary(fit2))
 # Test on phi
 lambda_obs <- 2*(fit1$loglik[2] + fit2$loglik[2] - fitall$loglik[2])
-cat("Observed value is", lambda_obs, "\n")
+cat("Observed lambda value is", lambda_obs, "\n")
 sigmap <- pchisq(1,df=1, lower.tail = F)
 cat("p-value = ", sigmap, "\n")
 # Test on mu
 mu_obs <- 2*(fitall$loglik[2] - fitall$loglik[1])
-cat("Observed value is", mu_obs, "\n")
+cat("Observed mu value is", mu_obs, "\n")
 cat("p-value = 6.5e-09 ")
 ```
 
-b) 
+```{=latex}
+b) The first thing we need to do is fit Weibull and KM model into the three stress level. Then from the plots below, we can see Weibull distribution fits the data pretty good for all three stress level, the overall pattern was similar to the KM curve. We can also see level 850 and 950 has more similar pattern. In level 750, the Weibull fit was slightly overestimated between t=3000 to 6000. We can also see the time fpr level 750 is much larger than 850 and 950 group. Therefore, as the stress level increases, the failure time would be much shorter. To get the location and scale value, we can just use fit\$coef and fit\$scale functions for level 750 and 850, for level 950, we need to use the summary from fitall model, the location value is fitall\$coeff[2]+mu1, and the scale value is the same as level 850. Therefoe, we have the value for level 750 is location = 8.798, scale = 0.686. for level 850 the location = 5.911, scale = 0.152, for level 950, the location = 5.911106-0.7032717 which is 5.208, scale = 0.152
+```
 
+```{r, echo = F}
+# for 750 level
+sig <- fit0$scale
+mu <- fit0$coef
+fit_km <- survfit(Surv(time, status)~1, data = data[data$stress == 750,])
+t <- 0:12000
+sf <- exp(-exp((log(t)-mu)/sig))
+plot(fit_km, xlab="number of thousand cycles to failure", 
+             ylab = "Estimated S(t)", main = "750 weibull vs KM", 
+     conf.int = F, lty = 2)
+lines(t, sf, lty = 1)
+legend("bottomleft", c("Weibull", "Kaplan-Meier"), lty = c(1,2))
+summary(fit0)
 
+# for 850 level
+sig <- fit1$scale
+mu <- fit1$coef
+fit_km <- survfit(Surv(time, status)~1, data = data1[data1$stress == 850,])
+t <- 0:12000
+sf <- exp(-exp((log(t)-mu)/sig))
+plot(fit_km, xlab="number of thousand cycles to failure", 
+             ylab = "Estimated S(t)", main = "850 weibull vs KM", 
+     conf.int = F, lty = 2)
+lines(t, sf, lty = 1)
+legend("bottomleft", c("Weibull", "Kaplan-Meier"), lty = c(1,2))
+summary(fit1)
 
+# for 950 level
+sig <- fit2$scale
+mu <- fit2$coef
+fit_km <- survfit(Surv(time, status)~1, data = data1[data1$stress == 950,])
+t <- 0:12000
+sf <- exp(-exp((log(t)-mu)/sig))
+plot(fit_km, xlab="number of thousand cycles to failure", 
+             ylab = "Estimated S(t)", main = "950 weibull vs KM", 
+     conf.int = F, lty = 2)
+lines(t, sf, lty = 1)
+legend("bottomleft", c("Weibull", "Kaplan-Meier"), lty = c(1,2))
+summary(fit2)
 
+# location for level 950
+x <- fitall$coefficients
+cat("The location parameter for level 950 is ", x)
+```
 
+\newpage
+## Question 4
+
+```{=latex}
+a) From the plot below, it seems like the control group has longer survival time, this means the treatment will acctually decrease the survival time in long term. We can also see when the survival time is between t=100 and t=400, the treatment group has hiogher survial rate, control group has higher survival rate after t=400 and before t= 100. This suggest that this radiation drug theraoy will provide survival benefit in short term but not longterm.
+```
+
+```{r, echo = F}
+bdc <- read.table("p34.txt", header=T)
+fit.km <- survfit(Surv(time, status)~as.factor(trt), data = bdc, conf.int=F)
+plot(fit.km, xlab = "time in days", ylab = "Estimated S(t)", 
+     main= "KM curve for treatment and control", col = 1:2)
+legend("topright", c("control", "treatment"),col = 1:2, lty = 1:1)
+```
+
+```{=latex}
+b) From the Logrank test, we can see the p-value is 0.8 which is greater than 0.05, this means we can not reject eh null hypothesis, and treatment S(t) =  control S(t). From the R code result, we know the two group have sam efailure time distribution. From the willcoxon test, we can see the p-value is 0.3 which is also greater than 0.05. this means we can not reject the null hypothesis, and treatment S(t) =  control S(t).From the R code result, we know the two group have sam efailure time distribution. In the above plot, we can see there is cross over occur, this means none of the logrank nor wilcoxon tests are suitable. Weight log rank test are meant to detect difference between s.f.s when the 2 groups do not cross over in survival function. because the difference cancels out.
+```
+
+```{r, echo = F}
+logrank <- survdiff(Surv(time, status)~as.factor(trt), data = bdc)
+logrank
+wilcox <- survdiff(Surv(time, status)~as.factor(trt), data = bdc, rho = 1)
+wilcox
+```
+
+```{=latex}
+c) The most commen parametric methods are log-normal and weibull, so we will test for both method in here. To see the fit for each method, we need to plot KM and the fited curve together to see the difference. From the control group plot, we can see lognormal distribution fits better becasue the Weibull model overestimate the survival rate in the most of the time point, lognormal model has more closer value to the km curve. In the treatment group, we can see Weibull model fits better in the early and late time points since the lognormal model will underestimate the suirival rate early and overestimate at the end. The lognrmal model fits better in the middle. To see which one is better, we still need a plot to check the overall fit. From the third plot, we can see lognormal distribution fits better, so we can conclude that the lognormal model performs better overall. Thus, the lognormal model is appropriate for the data. Further more, becasue the sample size is quite small, the model fit maybe different as the sample size increases.
+```
+
+```{r, echo = F, fig.height=6, fig.width=10}
+# for control and treatment group separately
+ctrl_km <- survfit(Surv(time, status)~as.factor(trt), 
+                   data = bdc[bdc$trt == 0,], conf.int=F)
+trt_km <- survfit(Surv(time, status)~as.factor(trt), 
+                  data = bdc[bdc$trt == 1,],  conf.int=F)
+t <- 0:3000
+# lognormal control
+lctrl <- survreg(Surv(time, status)~1, data = bdc[bdc$trt == 0,], 
+                 dist = "lognormal")
+mulc <- lctrl$coefficients
+siglc <- lctrl$scale
+stlc <- 1 - pnorm((log(t) - mulc)/siglc)
+# lognormal treatment
+ltrt <- survreg(Surv(time, status)~1, data = bdc[bdc$trt == 1,], 
+                dist = "lognormal")
+mult <- ltrt$coefficients
+siglt <- ltrt$scale
+stlt <- 1 - pnorm((log(t) - mult)/siglt)
+# Weibull control
+wctrl <- survreg(Surv(time, status)~1, data = bdc[bdc$trt == 0,])
+muwc <- wctrl$coefficients
+sigwc <- wctrl$scale
+stwc <- exp(-exp((log(t)-muwc)/sigwc))
+# Weibull treatment
+wtrt <- survreg(Surv(time, status)~1, data = bdc[bdc$trt == 1,])
+muwt <- wtrt$coefficients
+sigwt <- wtrt$scale
+stwt <- exp(-exp((log(t)-muwt)/sigwt))
+
+plot(ctrl_km, xlab = "time in days", ylab = "Estimated S(t)",
+     main= "KM vs Lognormal vs Weibull: control group", conf.int = F, lty = 2)
+lines(t, stlc, lty = 1, lwd = 2, col = 2)
+lines(t, stwc, lty = 1, lwd = 2, col = 3)
+legend("topright", c("KM", "Lognormal", "Weibull"), col = c(1,2,3), lty = c(2,1,1))
+
+plot(trt_km, xlab = "time in days", ylab = "Estimated S(t)", 
+     main= "KM vs Lognormal vs Weibull: treatment group", conf.int = F, lty = 2)
+lines(t, stlt, lty = 1, lwd = 2, col = 2)
+lines(t, stwt, lty = 1, lwd = 2, col = 3)
+legend("topright", c("KM", "Lognormal", "Weibull"), col = c(1,2,3), lty = c(2,1,1))
+
+#overall
+
+all_km <- survfit(Surv(time, status)~1, 
+                   data = bdc, conf.int=F)
+wall <- survreg(Surv(time, status)~1, data = bdc)
+muw <- wall$coefficients
+sigw <- wall$scale
+stw <- exp(-exp((log(t)-muw)/sigw))
+lall <- survreg(Surv(time, status)~1, data = bdc, dist = "lognormal")
+mul <- lall$coefficients
+sigl <- lall$scale
+stl <- 1 - pnorm((log(t) - mul)/sigl)
+
+plot(all_km, xlab = "time in days", ylab = "Estimated S(t)", 
+     main= "KM vs Lognormal vs Weibull: both group", conf.int = F, lty = 2)
+lines(t, stl, lty = 1, lwd = 2, col = 2)
+lines(t, stw, lty = 1, lwd = 2, col = 3)
+legend("topright", c("KM", "Lognormal", "Weibull"), col = c(1,2,3), lty = c(2,1,1))
+```
+
+\newpage
+## Question 5
+
+\newpage
+## Appendix
+
+### Question 1
+
+```{r, eval=F}
+library(survival)
+data<-read.table("p31.txt", header=T)
+data <- data[data$stress == 750,]
+x<-data$time
+delta<-data$status
+fit.weib<- survreg(Surv(x, delta)~1)
+summary(fit.weib)
+
+y <- log(-log(0.5))
+y_mid <- fit.weib$coef + y*fit.weib$scale
+vary_mid <- as.numeric(t(matrix(c(1, y*fit.weib$scale))) %*% 
+                         as.matrix(fit.weib$var) %*% 
+                         matrix(c(1, y*fit.weib$scale)))
+CIL <- exp(y_mid - 1.96*sqrt(vary_mid))
+CIU <- exp(y_mid + 1.96*sqrt(vary_mid))
+CI <- c(CIL, CIU)
+CI
+```
+```{r, eval=F}
+# b) 
+sig<-fit.weib$scale
+mu<-fit.weib$coef
+phi <- log(sig)
+var1 <- matrix(c(-exp(-phi), -(log(6000)-mu)*-exp(-phi)))
+var_loglog <- t(var1) %*% fit.weib$var %*% var1
+loglog_st <- (log(6000)-mu)/sig
+CIlogL <- loglog_st - 1.96*sqrt(var_loglog)
+CIlogU <- loglog_st + 1.96*sqrt(var_loglog)
+CIU <- exp(-exp(CIlogL))
+CIL <- exp(-exp(CIlogU))
+CI <- c(CIL, CIU)
+CI
+```
+
+### Question 2
+
+```{r, eval=FALSE, fig.height=5}
+time <- c(2.5, 4.1, 4.6, 6.4, 6.7, 7.4, 7.6, 7.7, 7.8, 8.8, 13.3, 13.4, 18.3, 
+          19.7, 21.9, 24.7, 27.5, 29.7, 30.1, 32.9, 33.5, 35.4, 37.7, 40.9, 
+          42.6, 45.4, 48.5, 48.9, 60.4, 64.4, 66.4)
+status <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 
+            0, 0, 0, 0, 0, 0, 0, 0, 0)
+data <- as.data.frame(cbind(time,status))
+fit <- survfit(Surv(time, status)~1)
+llt <- log(-log(fit$surv))
+lt <- log(time)
+plot(lt,llt,main="Q-Q Plot: log(-log(Skm(t))) vs
+log(t)")
+lines(seq(0,7,0.1),seq(-3.5,3.5,0.1), lty=2)
+```
+```{r, eval=F, fig.height=4}
+fit.weib <- survreg(Surv(time, status)~1, data = data)
+sig1<-fit.weib$scale
+mu1<-fit.weib$coef
+time<-fit$time
+sf.weib<-exp(-exp((log(time)-mu1)/sig1))
+
+fit.exp <- survreg(Surv(time, status)~1, dist = "exp", data = data)
+mu2 <- fit.exp$coef
+sf.exp <- exp(-exp((log(time)-mu2)))
+
+sf.km<-fit$surv
+
+par(mfrow=c(1,2))
+plot(sf.km,sf.weib,main="P-P Plot: Weibull vs
+Kaplan-Meier")
+lines(seq(0,1,0.1),seq(0,1,0.1), lty=2)
+plot(sf.km, sf.exp, main="P-P Plot: Exponential vs
+Kaplan-Meier")
+lines(seq(0,1,0.1),seq(0,1,0.1), lty=2)
+
+par(mfrow=c(1,1))
+t<-0:175
+st.weib<-exp(-exp((log(t)-mu1)/sig1))
+st.exp<-exp(-exp(log(t)-mu2))
+plot(fit,xlab="time",
+     ylab="Estimated S(t)",main="Advanced non-Hodgkin’s Lymphoma", 
+     conf.int=F,lty=1,lwd=2)
+lines(t,st.weib,lty=2,lwd=2, col=2)
+lines(t,st.exp,lty=5,lwd=2, col=3)
+legend("bottomleft", c("Kaplan-Meier", "Weibull", "Exponential"), 
+       col=c(1,2,3), lty=c(1,2,5))
+```
+```{r, eval=F, fig.height=8.5}
+par(mfrow=c(2,1))
+
+fit.lognm<-survreg(Surv(time,status)~1,data=data, dist="lognormal")
+mu3<-fit.lognm$coeff
+sig3<-fit.lognm$scale
+sf.lognm<-1-pnorm((log(time)-mu3)/sig3)
+plot(sf.km, sf.lognm, main="P-P Plot: LogNormal vs Kaplan-Meier")
+lines(seq(0,1,0.1),seq(0,1,0.1), lty=2)
+
+t<-0:175
+st.weib<-exp(-exp((log(t)-mu1)/sig1))
+st.exp<-exp(-exp(log(t)-mu2))
+st.lognm<-1-pnorm((log(t)-mu3)/sig3)
+plot(fit,xlab="time",
+     ylab="Estimated S(t)",main="Advanced non-Hodgkin’s Lymphoma", 
+     conf.int=F,lty=1,lwd=2)
+lines(t,st.weib,lty=2,lwd=2, col=2)
+lines(t,st.exp,lty=5,lwd=2, col=3)
+lines(t,st.lognm,lty=7,lwd=2, col=4)
+legend("bottomleft", c("Kaplan-Meier", "Weibull", "Exponential", "lognormal"), 
+       col=c(1,2,3,4), lty=c(1,2,5,7))
+```
+
+### Question 3
+
+```{r, eval = F}
+data<-read.table("p31.txt", header=T)
+data1 <- data[data$stress != 750,]
+fitall <- survreg(Surv(time, status)~as.factor(stress), data = data1)
+fit0 <- survreg(Surv(time, status)~1, data = data[data$stress == 750,])
+fit1 <- survreg(Surv(time, status)~1, data = data1[data1$stress == 850,])
+fit2 <- survreg(Surv(time, status)~1, data = data1[data1$stress == 950,])
+print(summary(fitall))
+print(summary(fit1))
+print(summary(fit2))
+# Test on phi
+lambda_obs <- 2*(fit1$loglik[2] + fit2$loglik[2] - fitall$loglik[2])
+cat("Observed lambda value is", lambda_obs, "\n")
+sigmap <- pchisq(1,df=1, lower.tail = F)
+cat("p-value = ", sigmap, "\n")
+# Test on mu
+mu_obs <- 2*(fitall$loglik[2] - fitall$loglik[1])
+cat("Observed mu value is", mu_obs, "\n")
+cat("p-value = 6.5e-09 ")
+```
+```{r, eval = F}
+# for 750 level
+sig <- fit0$scale
+mu <- fit0$coef
+fit_km <- survfit(Surv(time, status)~1, data = data[data$stress == 750,])
+t <- 0:12000
+sf <- exp(-exp((log(t)-mu)/sig))
+plot(fit_km, xlab="number of thousand cycles to failure", 
+             ylab = "Estimated S(t)", main = "750 weibull vs KM", 
+     conf.int = F, lty = 2)
+lines(t, sf, lty = 1)
+legend("bottomleft", c("Weibull", "Kaplan-Meier"), lty = c(1,2))
+summary(fit0)
+
+# for 850 level
+sig <- fit1$scale
+mu <- fit1$coef
+fit_km <- survfit(Surv(time, status)~1, data = data1[data1$stress == 850,])
+t <- 0:12000
+sf <- exp(-exp((log(t)-mu)/sig))
+plot(fit_km, xlab="number of thousand cycles to failure", 
+             ylab = "Estimated S(t)", main = "850 weibull vs KM", 
+     conf.int = F, lty = 2)
+lines(t, sf, lty = 1)
+legend("bottomleft", c("Weibull", "Kaplan-Meier"), lty = c(1,2))
+summary(fit1)
+
+# for 950 level
+sig <- fit2$scale
+mu <- fit2$coef
+fit_km <- survfit(Surv(time, status)~1, data = data1[data1$stress == 950,])
+t <- 0:12000
+sf <- exp(-exp((log(t)-mu)/sig))
+plot(fit_km, xlab="number of thousand cycles to failure", 
+             ylab = "Estimated S(t)", main = "950 weibull vs KM", 
+     conf.int = F, lty = 2)
+lines(t, sf, lty = 1)
+legend("bottomleft", c("Weibull", "Kaplan-Meier"), lty = c(1,2))
+summary(fit2)
+
+# location for level 950
+x <- fitall$coefficients
+cat("The location parameter for level 950 is ", x)
+```
+
+### Question 4
+
+```{r, eval = F}
+bdc <- read.table("p34.txt", header=T)
+fit.km <- survfit(Surv(time, status)~as.factor(trt), data = bdc, conf.int=F)
+plot(fit.km, xlab = "time in days", ylab = "Estimated S(t)", 
+     main= "KM curve for treatment and control", col = 1:2)
+legend("topright", c("control", "treatment"),col = 1:2, lty = 1:1)
+```
+```{r, eval = F}
+logrank <- survdiff(Surv(time, status)~as.factor(trt), data = bdc)
+logrank
+wilcox <- survdiff(Surv(time, status)~as.factor(trt), data = bdc, rho = 1)
+wilcox
+```
+```{r, eval = F, fig.height=6, fig.width=10}
+# for control and treatment group separately
+ctrl_km <- survfit(Surv(time, status)~as.factor(trt), 
+                   data = bdc[bdc$trt == 0,], conf.int=F)
+trt_km <- survfit(Surv(time, status)~as.factor(trt), 
+                  data = bdc[bdc$trt == 1,],  conf.int=F)
+t <- 0:3000
+# lognormal control
+lctrl <- survreg(Surv(time, status)~1, data = bdc[bdc$trt == 0,], 
+                 dist = "lognormal")
+mulc <- lctrl$coefficients
+siglc <- lctrl$scale
+stlc <- 1 - pnorm((log(t) - mulc)/siglc)
+# lognormal treatment
+ltrt <- survreg(Surv(time, status)~1, data = bdc[bdc$trt == 1,], 
+                dist = "lognormal")
+mult <- ltrt$coefficients
+siglt <- ltrt$scale
+stlt <- 1 - pnorm((log(t) - mult)/siglt)
+# Weibull control
+wctrl <- survreg(Surv(time, status)~1, data = bdc[bdc$trt == 0,])
+muwc <- wctrl$coefficients
+sigwc <- wctrl$scale
+stwc <- exp(-exp((log(t)-muwc)/sigwc))
+# Weibull treatment
+wtrt <- survreg(Surv(time, status)~1, data = bdc[bdc$trt == 1,])
+muwt <- wtrt$coefficients
+sigwt <- wtrt$scale
+stwt <- exp(-exp((log(t)-muwt)/sigwt))
+
+plot(ctrl_km, xlab = "time in days", ylab = "Estimated S(t)",
+     main= "KM vs Lognormal vs Weibull: control group", conf.int = F, lty = 2)
+lines(t, stlc, lty = 1, lwd = 2, col = 2)
+lines(t, stwc, lty = 1, lwd = 2, col = 3)
+legend("topright", c("KM", "Lognormal", "Weibull"), col = c(1,2,3), lty = c(2,1,1))
+
+plot(trt_km, xlab = "time in days", ylab = "Estimated S(t)", 
+     main= "KM vs Lognormal vs Weibull: treatment group", conf.int = F, lty = 2)
+lines(t, stlt, lty = 1, lwd = 2, col = 2)
+lines(t, stwt, lty = 1, lwd = 2, col = 3)
+legend("topright", c("KM", "Lognormal", "Weibull"), col = c(1,2,3), lty = c(2,1,1))
+
+#overall
+
+all_km <- survfit(Surv(time, status)~1, 
+                   data = bdc, conf.int=F)
+wall <- survreg(Surv(time, status)~1, data = bdc)
+muw <- wall$coefficients
+sigw <- wall$scale
+stw <- exp(-exp((log(t)-muw)/sigw))
+lall <- survreg(Surv(time, status)~1, data = bdc, dist = "lognormal")
+mul <- lall$coefficients
+sigl <- lall$scale
+stl <- 1 - pnorm((log(t) - mul)/sigl)
+
+plot(all_km, xlab = "time in days", ylab = "Estimated S(t)", 
+     main= "KM vs Lognormal vs Weibull: both group", conf.int = F, lty = 2)
+lines(t, stl, lty = 1, lwd = 2, col = 2)
+lines(t, stw, lty = 1, lwd = 2, col = 3)
+legend("topright", c("KM", "Lognormal", "Weibull"), col = c(1,2,3), lty = c(2,1,1))
+```
