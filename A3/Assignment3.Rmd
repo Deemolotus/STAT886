@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{=latex}
 a)
-To get the 95\% confidence interval for median survival time, that is find $t_{0.5}$. We first need to fit a Weibull model for the data at stress level $750 N/mm^2$, the result below is the model fit result. Then we have $\hat{\sigma}$, $\hat{\mu}$ and estimate $\hat{Var}$.Then let $Y = logT$, and we can calculate $y_{0.5}$. After this step, we can calculate the $Var(\hat{y_{0.5}})$. Now, we can use 95\% CI for $y_{0.5}$. Finally, we can use $t_{0.5} = exp(y_{0.5})$ to get 95\% confidence interval for median($t_0.5$) is [5142.356, 14100.130].
+To get the 95\% confidence interval for median survival time, that is find $t_{0.5}$. We first need to fit a Weibull model for the data at stress level $750 N/mm^2$, the result below is the model fit result. Then we have $\hat{\sigma}$, $\hat{\mu}$ and estimate $\hat{Var}$.Then let $Y = logT$, and we can calculate $y_{0.5}$. After this step, we can calculate the $Var(\hat{y_{0.5}})$. Now, we can use 95\% CI for $y_{0.5}$. Finally, we can use $t_{0.5} = exp(y_{0.5})$ to get 95\% confidence interval for median($t_0.5$) is [3109.220, 8525.353].
 ```
 
 ```{r, echo=F}
@@ -24,7 +24,11 @@ x<-data$time
 delta<-data$status
 fit.weib<- survreg(Surv(x, delta)~1)
 summary(fit.weib)
+```
 
+\newpage
+```{r}
+# a)
 y <- log(-log(0.5))
 y_mid <- fit.weib$coef + y*fit.weib$scale
 vary_mid <- as.numeric(t(matrix(c(1, y*fit.weib$scale))) %*% 
@@ -36,12 +40,13 @@ CI <- c(CIL, CIU)
 CI
 ```
 
+\newpage
 ```{=latex}
 b)
-To get the confidence interval for the probability that the type of spring survives over 6000 thousand cycles at the stress level $750 N=mm^2$. that is find the $S(6000)$. The first step is to find the CI for $log[-log(S(t))]$, this is equal to $(log(t)-\mu)e^{-\phi}$. Then we can find $var((log(t)-\mu)e^{-\phi})$ using $\delta$-method. Now, we have the 95\% CI for $log[-log(S(6000))]$, Then we can calculate $CIl$ and $CIu$ by using $exp(-exp(\hat{\psi_u}))$ and $exp(-exp(\hat{\psi_l}))$. Finally, we can get the result 95\% CI is [0.108, 0.550]
+To get the confidence interval for the probability that the type of spring survives over 6000 thousand cycles at the stress level $750 N=mm^2$. that is find the $S(6000)$. The first step is to find the CI for $log[-log(S(t))]$, this is equal to $(log(t)-\mu)e^{-\phi}$. Then we can find $var((log(t)-\mu)e^{-\phi})$ using $\delta$-method. Now, we have the 95\% CI for $log[-log(S(6000))]$, Then we can calculate $CIl$ and $CIu$ by using $exp(-exp(\hat{\psi_u}))$ and $exp(-exp(\hat{\psi_l}))$. Finally, we can get the result 95\% CI is [0.188, 0.638]
 ```
 
-```{r, echo=F}
+```{r, echo=T}
 # b) 
 sig<-fit.weib$scale
 mu<-fit.weib$coef
@@ -310,6 +315,9 @@ legend("topright", c("KM", "Lognormal", "Weibull"), col = c(1,2,3), lty = c(2,1,
 
 \newpage
 ## Question 5
+
+\newpage
+&nbsp;
 
 \newpage
 ## Appendix
