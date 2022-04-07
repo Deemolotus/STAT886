@@ -1,0 +1,22 @@
+---
+title: "Assignment 4"
+author: "Zhiwen Tan"
+date: "4/7/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+```{r cars}
+summary(cars)
+```
+
+## Question 2
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
