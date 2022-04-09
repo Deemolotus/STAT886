@@ -11,14 +11,197 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Question 1
 
-```{r}
-library(survival)
-x <- read.table("p42.txt", header = T)
-fit <- survreg(Surv(time, status)~log)
-```
 
+\newpage
 ## Question 2
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+a) Because AG is binary data, so scatter plot may not give us many information compare to KM graph.
+
+* Kaplan-Meier plot for covariate AG 
+
+```{r, echo=F}
+library(survival)
+data <- read.table("p42.txt", header = T)
+fit <- survfit(Surv(time, status)~as.factor(AG), data = data)
+plot(fit, conf.int = F, mark.time = T, xlab = "Weeks", 
+     ylab = "Survival Probability", col = 1:2)
+legend("topright", c("negative", "positive"), col = 1:2, lty=1:1)
+```
+
+  From the KM graph, we can see both positive and negative group has similar survival probability at the beginning. However, the difference in survival probability is greater after 4 weeks. Overall, the positive AG group patients has higher survival probability and longer survival time. Also, the positive group has 3 censored points where the negative group has no censored data. 
+
+* The wbc is a continuous variable, so a scatter plot would be more appropriate. Also, this p42 dataset is lightly censored data because there are only 3 censored data. Therefore, we can check the covariate with scatter plot. 
+
+```{r, echo=F, fig.width=10, fig.height= 8}
+delta<-data$status
+x<-data$time
+wbc<-data$wbc
+par(mfrow = c(2,2))
+#scatter plot for wbc
+plot(wbc[delta==1],log(x[delta==1]),pch=4,xlab="white blood cell count",
+     ylab="log survival time",main="log time vs wbc")
+points(wbc[delta==0],log(x[delta==0]),pch=1)
+legend(70,1,c("f","c"),pch=c(4,1))
+
+plot(log(wbc[delta==1]),log(x[delta==1]),pch=4,xlab="white blood cell count",
+     ylab="log survival time",main="log time vs log wbc")
+points(wbc[delta==0],log(x[delta==0]),pch=1)
+legend(1,1,c("f","c"),pch=c(4,1))
+
+plot(wbc[delta==1]^2,log(x[delta==1]),pch=4,xlab="white blood cell count",
+     ylab="log survival time",main="log time vs wbc^2")
+points(wbc[delta==0],log(x[delta==0]),pch=1)
+legend(8000,1,c("f","c"),pch=c(4,1))
+
+plot(exp(wbc[delta==1]),log(x[delta==1]),pch=4,xlab="white blood cell count",
+     ylab="log survival time",main="log time vs exp wbc")
+points(wbc[delta==0],log(x[delta==0]),pch=1)
+legend("center",c("f","c"),pch=c(4,1))
+```
+
+We have tried log time vs wbc, log wbc, wbc\^2, and exp(wbc). Among those four scatter plots, "log time vs log wbc" shows some linear decreasing pattern, other plots does not have a clear pattern. Therefore, the survival time might have some relationship with log(wbc).
+
+\newpage
+b) Here, we will build three models and check which one is the best
+
+The first model will include both AG and log(wbc), the fitted results are:
+```{r, echo=F}
+fit1 <- survreg(Surv(time, status)~as.factor(AG) + log(wbc), data = data)
+summary(fit1)
+```
+
+The p value for AG and log(wbc) are 0.0058 and 0.0143, both less than 0.05. the overall p-value is 0.00039, which is way less than 0.05, so we can conclude that our model fits the data well.
+
+The second model would be AG only, the results are shown as below:
+
+```{r, echo=F}
+fit2 <- survreg(Surv(time, status)~as.factor(AG), data = data)
+summary(fit2)
+```
+
+```{=latex}
+To check if this model is better than the first one, we need to do the LR test.\\
+\begin{align*}
+    \lambda_{obs} &= 2 * (-132.5 + 135.5)\\
+    &= 6
+\end{align*}\\
+This follows a chisq distribution with df=1, we can use $pchisq(6,1,lower.tal=F)$ to get the p-value, which is $0.01430588 < 0.05$. This means we can not reject the null hypothesis, and model 1 is better.
+```
+
+The third model is log(wbc) only, the results are shown as below:
+
+```{r, echo=F}
+fit3 <- survreg(Surv(time, status)~log(wbc), data = data)
+summary(fit3)
+```
+
+```{=latex}
+To check if this model is better than the first one, we need to do the LR test.\\
+\begin{align*}
+    \lambda_{obs} &= 2 * (-132.5 + 136)\\
+    &= 7
+\end{align*}\\
+This follows a chisq distribution with df=1, we can use $pchisq(7,1,lower.tal=F)$ to get the p-value, which is $0.008150972 < 0.05$. This means we can not reject the null hypothesis, and model 1 is better.
+```
+
+Therefore, we can conclude that model 1 with both AG and log(wbc) is the best parametric regression model for this dataset.
+
+\newpage
+c) Cox-snell residual 
+
+```{r, echo=F, fig.height=7}
+AG <-data$AG
+wbc <- data$wbc
+x <- data$time
+b<-fit1$coeff
+mu<-b[1]+b[2]*AG+b[3]*log(wbc)
+sig<-fit1$scale
+delta<-data$status
+r<-exp(log(x)-mu/sig)+1-delta
+r1<-exp((log(x)-mu)/sig)
+
+par(mfrow = c(2,1))
+plot(AG,r,pch=16,xlab="AG"
+     ,ylab="Residuals",main="Cox-Snell Residuals: leukemia patients")
+lines(seq(0,1),rep(1,2),lty=2)
+legend(0.4,4,"mean of exp(1)",lty = 2)
+
+
+plot(log(wbc),r,pch=16,xlab="log(wbc)"
+     ,ylab="Residuals",main="Cox-Snell Residuals: leukemia patients")
+lines(seq(-1,6),rep(1,8),lty=2)
+legend("topleft","mean of exp(1)",lty = 2)
+```
+
+The Cox-Snell residual plot has expected behavior, and look like exp(1) observation. therefor, model 1 fits pretty well.
+
+```{r, echo = F}
+fitr <- survfit(Surv(r1,delta)~1)
+plot(fitr, fun="cumhaz", conf.int = F, xlab = "Residual r", ylab = "K-M estimate H(r)", main = "estimated H(r) from Original Cox-Snell residuals")
+lines(0:4, 0:4, col = 2)
+
+```
+
+From the K-M estimated H(r) from original Cox-Snell residual plot, we can see the trend is similar to y = x. This suggest that our model 1 fits the data pretty well.
+
+d) Our final model is model 1, the summary is shown as below:
+
+```{r, echo=F}
+summary(fit1)
+```
+
+```{=latex}
+The final model has formula of\\
+\begin{align*}
+    log(time) &= 3.841 + 1.177*I(AG = 1) - 0.366*log(wbc)
+\end{align*}\\
+
+In this model, we have $\hat{\beta_0}, \hat{\beta_1}, \hat{\beta_2}$.\\
+
+$\hat{\beta_0} = 3.841$ when AG is negative and wbc cell count at diagnosis is 0. The average failure time is 3.841-E[EV(0,1)] = 3.841 - 0.577 = 3.264. In here, the $\hat{\beta_0}$ contains both expected log failure time and the expectation of EV(0,1).\\
+
+$\hat{\beta_1} = 1.177$, this means if we assume log(wbc) stays the same, then, when AG test is positive (AG = 1), the log failure time will increase by 1.177 unit compare to negative AG test.  
+
+$\hat{\beta_2} = -0.366$, this means if we assume AG stays the same, then, 1 unit log(wbc) increase will decrease the log failure time by 0.366 unit.
+```
+
+\newpage
+## Question 3
+
+The original file has multiple recurrence for each patients, and some patients has no recurrence, so we need to clean the file first, then we can read the data into data frame. After cleaning the data, we have the data looks like below
+
+```{r, echo=F}
+library(dplyr)
+blad <- read.table("bladder.txt", col.names = c("Group", "fultime", "number", "size", "time", "r2", "r3", "r4"), fill = T, na.strings = "", header = F)
+blad <- blad[,1:5]
+blad$status <- ifelse(is.na(blad$time), 0,1)
+blad <- blad %>% 
+    mutate(time = coalesce(time,fultime))
+head(blad)
+```
+
+Now we can draw a KM plot for our data.
+
+```{r}
+fit_km <- survfit(Surv(time, status)~as.factor(Group), data = blad)
+plot(fit_km, conf.int = F, mark.time = T, xlab = "time(months)", ylab = "Survival Probability", col = 1:2, main = "Bladder cancer KM plot")
+legend("topright", c("Placebo group", "Drug group"), lty = 1:1, col = 1:2)
+```
+
+```{r}
+fit_co1 <- coxph(Surv(time, status)~as.factor(Group)+number+size, data = blad)
+summary(fit_co1)
+```
+
+```{r}
+fit_co2 <- coxph(Surv(time, status)~as.factor(Group)+number, data = blad)
+summary(fit_co2)
+fit_co2$loglik
+pchisq(2*(180.4023 - 180.1783), 1, lower.tail = F)
+```
+
+```{r}
+fit_co3 <- coxph(Surv(time, status)~number, data = blad)
+summary(fit_co3)
+fit_co3
 ```

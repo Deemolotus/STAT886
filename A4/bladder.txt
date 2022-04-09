@@ -1,15 +1,3 @@
-Tumor Recurrence data for patients with Bladder cancer
-      Taken from Wei, Lin and Weissfeld, JASA 1989, p 1067.
-
-Treatment group: 1=placebo  2=thiotepa
-Follow up time and recurrence time are measured in months.
-Initial size is measured in centimeters.
-Initial number of 8 denotes 8 or more initial tumors.
-
-Up to 4 recurrence times are recorded per patient.
-
-Group     futime  number size    recurrence times
-
   1         0       1     1
   1         1       1     3
   1         4       2     1
