@@ -191,6 +191,7 @@ legend("topright", c("Placebo group", "Drug group"), lty = 1:1, col = 1:2)
 ```{r}
 fit_co1 <- coxph(Surv(time, status)~as.factor(Group)+number+size, data = blad)
 summary(fit_co1)
+fit_co1$loglik
 ```
 
 ```{r}
@@ -203,5 +204,15 @@ pchisq(2*(180.4023 - 180.1783), 1, lower.tail = F)
 ```{r}
 fit_co3 <- coxph(Surv(time, status)~number, data = blad)
 summary(fit_co3)
-fit_co3
+fit_co3$loglik
+pchisq(2*(181.7882 - 180.4023), 1, lower.tail = F)
+```
+
+```{r}
+fit_res <- resid(fit_co3, type = "deviance")
+par(mfrow = c(2,2))
+plot(blad$number, fit_res, xlab = "Number", ylab = "Deviance Residuals")
+plot(predict(fit_co3), fit_res, xlab = "risk score", ylab = "Deviance Residuals")
+qqnorm(fit_res, xlab = "N(0,1) Quantiles", ylab = "Deviance Residuals")
+abline(0,1,col = 2)
 ```
