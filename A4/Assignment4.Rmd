@@ -15,6 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Question 1
 \newpage
 ~\newpage
+~\newpage
 
 ## Question 2
 
