@@ -2,7 +2,10 @@
 title: "Assignment 4"
 author: "Zhiwen Tan"
 date: "4/7/2022"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -10,9 +13,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Question 1
-
-
 \newpage
+~\newpage
+
 ## Question 2
 
 a) Because AG is binary data, so scatter plot may not give us many information compare to KM graph.
@@ -69,6 +72,12 @@ The first model will include both AG and log(wbc), the fitted results are:
 fit1 <- survreg(Surv(time, status)~as.factor(AG) + log(wbc), data = data)
 summary(fit1)
 ```
+```{=latex}
+model 1 has formula of\\
+\begin{align*}
+    Y &= 3.841 + 1.177*I(AG = 1) - 0.366*log(wbc)
+\end{align*}\\
+```
 
 The p value for AG and log(wbc) are 0.0058 and 0.0143, both less than 0.05. the overall p-value is 0.00039, which is way less than 0.05, so we can conclude that our model fits the data well.
 
@@ -80,12 +89,19 @@ summary(fit2)
 ```
 
 ```{=latex}
+model 2 has formula of\\
+\begin{align*}
+    Y &= 2.800 + 1.459*I(AG = 1)
+\end{align*}\\
+```
+
+```{=latex}
 To check if this model is better than the first one, we need to do the LR test.\\
 \begin{align*}
     \lambda_{obs} &= 2 * (-132.5 + 135.5)\\
     &= 6
 \end{align*}\\
-This follows a chisq distribution with df=1, we can use $pchisq(6,1,lower.tal=F)$ to get the p-value, which is $0.01430588 < 0.05$. This means we can not reject the null hypothesis, and model 1 is better.
+This follows a chisq distribution with df=1, we can use $pchisq(6,1,lower.tal=F)$ to get the p value, which is $0.01430588 < 0.05$. This means we can reject the null hypothesis, and model 1 is better.
 ```
 
 The third model is log(wbc) only, the results are shown as below:
@@ -96,12 +112,19 @@ summary(fit3)
 ```
 
 ```{=latex}
+model 3 has formula of\\
+\begin{align*}
+    Y &= 4.854 - 0.500*log(wbc)
+\end{align*}\\
+```
+
+```{=latex}
 To check if this model is better than the first one, we need to do the LR test.\\
 \begin{align*}
     \lambda_{obs} &= 2 * (-132.5 + 136)\\
     &= 7
 \end{align*}\\
-This follows a chisq distribution with df=1, we can use $pchisq(7,1,lower.tal=F)$ to get the p-value, which is $0.008150972 < 0.05$. This means we can not reject the null hypothesis, and model 1 is better.
+This follows a chisq distribution with df=1, we can use $pchisq(7,1,lower.tal=F)$ to get the p value, which is $0.008150972 < 0.05$. This means we can reject the null hypothesis, and model 1 is better.
 ```
 
 Therefore, we can conclude that model 1 with both AG and log(wbc) is the best parametric regression model for this dataset.
@@ -110,6 +133,322 @@ Therefore, we can conclude that model 1 with both AG and log(wbc) is the best pa
 c) Cox-snell residual 
 
 ```{r, echo=F, fig.height=7}
+AG <-data$AG
+wbc <- data$wbc
+x <- data$time
+b<-fit1$coeff
+mu<-b[1]+b[2]*AG+b[3]*log(wbc)
+sig<-fit1$scale
+delta<-data$status
+r<-exp(log(x)-mu/sig)+1-delta
+r1<-exp((log(x)-mu)/sig)
+
+plot(log(wbc),r,pch=16,xlab="log(wbc)"
+     ,ylab="Residuals",main="Cox-Snell Residuals: leukemia patients")
+lines(seq(-1,6),rep(1,8),lty=2)
+legend("topleft","mean of exp(1)",lty = 2)
+```
+
+The Cox-Snell residual plot has expected behavior. the dots are denser between 0 to 1 and look like exp(1) observation. Therefore, model 1 fits pretty well.
+
+```{r, echo = F}
+fitr <- survfit(Surv(r1,delta)~1)
+plot(fitr, fun="cumhaz", conf.int = F, xlab = "Residual r", 
+     ylab = "K-M estimate H(r)", 
+     main = "estimated H(r) from Original Cox-Snell residuals")
+lines(0:4, 0:4, col = 2)
+
+```
+
+From the K-M estimated H(r) from original Cox-Snell residual plot, we can see the trend is similar to y = x. This suggest that our model 1 fits the data pretty well.
+
+d) Our final model is model 1, the summary is shown as below:
+
+```{r, echo=F}
+summary(fit1)
+```
+
+```{=latex}
+The final model has formula of\\
+\begin{align*}
+    log(time) &= 3.841 + 1.177*I(AG = 1) - 0.366*log(wbc)
+\end{align*}\\
+
+In this model, we have $\hat{\beta_0}, \hat{\beta_1}, \hat{\beta_2}$.\\
+
+$\hat{\beta_0} = 3.841$ when AG is negative and wbc cell count at diagnosis is 0. The average failure time is 3.841 - E[EV(0,1)] = 3.841 - 0.577 = 3.264. In here, the $\hat{\beta_0}$ contains both expected log failure time and the expectation of EV(0,1).\\
+
+$\hat{\beta_1} = 1.177$, this means if we assume log(wbc) stays the same, then, when AG test is positive (AG = 1), the log failure time will increase by 1.177 unit compare to negative AG test.  
+
+$\hat{\beta_2} = -0.366$, this means if we assume AG stays the same, then, 1 unit log(wbc) increase will decrease the log failure time by 0.366 unit.
+```
+
+\newpage
+## Question 3
+
+The original file has multiple recurrence for each patients, and some patients has no recurrence, so we need to clean the file first, then we can read the data into data frame. After cleaning the data, we have the data looks like below
+
+```{r, echo=F}
+library(dplyr)
+blad <- read.table("bladder.txt", col.names = c("Group", "fultime", 
+                                                "number", "size", "time", 
+                                                "r2", "r3", "r4"), 
+                   fill = T, na.strings = "", header = F)
+blad <- blad[,1:5]
+blad$status <- ifelse(is.na(blad$time), 0,1)
+blad <- blad %>% 
+    mutate(time = coalesce(time,fultime))
+head(blad)
+```
+
+Now we can draw a KM plot for our data to make compare between placebo and drug group.
+
+```{r, echo=F}
+fit_km <- survfit(Surv(time, status)~as.factor(Group), data = blad)
+plot(fit_km, conf.int = F, mark.time = T, xlab = "time(months)", 
+     ylab = "Survival Probability", col = 1:2, main = "Bladder cancer KM plot")
+legend("topright", c("Placebo group", "Drug group"), lty = 1:1, col = 1:2)
+```
+
+From the KM plot, we can see the drug group and placebo group has similar survival probability in the first 6 months. After 6 month, there are greater difference between drug group and placebo group, the survival probability is higher in drug group. 
+
+After graph exploration, we want to fit cox model to the bladder data. 
+
+Model 1: Cox model with Group, number and size
+
+```{r, echo=F}
+fit_co1 <- coxph(Surv(time, status)~as.factor(Group)+number+size, data = blad)
+summary(fit_co1)
+fit_co1$loglik
+```
+
+```{=latex}
+The hazard function of failure time $T_i$ has the form
+
+\begin{align*}
+    h(t|z_i) &= h_0(t) exp(0.23818*number + 0.06961* size - 0.52598*I(Group = 2))
+\end{align*}\\
+
+We can see the p value for number is 0.0017 < 0.05, which means number variable is an important covariate. the p-value for both group and size are greater than 0.05. This indicate that both variable are not statistically significant, but the p-value for group 0.0958 is just slightly over 0.05, so there might still have some relationship. However, the p-value for size is far away from 0.05, so we can delete this variable in the model.\\
+
+Now we know size variable is not important, so we want to try our second model which include only Group and number to see if this make any difference.\\
+
+Model 2: Cox model with Group and number\\
+```
+
+```{r, echo=F}
+fit_co2 <- coxph(Surv(time, status)~as.factor(Group)+number, data = blad)
+summary(fit_co2)
+fit_co2$loglik
+pchisq(2*(180.4023 - 180.1783), 1, lower.tail = F)
+```
+
+```{=latex}
+The hazard function of failure time $T_i$ has the form\\
+
+\begin{align*}
+    h(t|z_i) &= h_0(t) exp(0.23079*number - 0.51218*I(Group = 2))
+\end{align*}\\
+
+To check if this model is better than the first, we need to do a LR test first.\\
+
+\begin{align*}
+    \lambda_{obs} &= 2 * (180.4023 - 180.1783)\\
+    &= 0.448
+\end{align*}\\
+
+This follows a chisq distribution with df=1, we can use $pchisq(0.448,1,lower.tail=F)$ to get the p value, which is $0.5032863 > 0.05$. This means we can not reject the null hypothesis, and model 1 is not better than model 2. We can also see, the p value for number is $0.00221 < 0.05$, which means the number varaible is significant. However, the p value for Group variable is $0.10176 > 0.05$ which indicates this variable is not statistically significant and we could remove this variable out of our model.\\
+
+Now we can try our third model with number variable only.\\
+
+Model 3: Cox model with number only\\
+```
+
+
+```{r, echo=F}
+fit_co3 <- coxph(Surv(time, status)~number, data = blad)
+summary(fit_co3)
+fit_co3$loglik
+pchisq(2*(181.7882 - 180.4023), 1, lower.tail = F)
+```
+
+```{=latex}
+The hazard function of failure time $T_i$ has the form\\
+
+\begin{align*}
+    h(t|z_i) &= h_0(t) exp(0.20120*number)
+\end{align*}\\
+
+To check if this model is better than the second model, we need to do a LR test first.\\
+
+\begin{align*}
+    \lambda_{obs} &= 2 * (181.7882 - 180.4023)\\
+    &= 2.7718
+\end{align*}\\
+
+This follows a chisq distribution with df=1, we can use $pchisq(2.7718,1,lower.tail=F)$ to get the p value, which is $0.09593822 > 0.05$. This means we can not reject the null hypothesis, and model 2 is not better than model 3. We can also see, the p value for number is $0.00442 < 0.05$, which means the number varaible is significant and the overall p value is also less than 0.05. This means model 3 is the best model.\\
+
+Therefore, Model 3 is our final model.\\
+
+Now, we can do the deviance residual analysis\\
+```
+
+```{r, echo=F}
+fit_res <- resid(fit_co3, type = "deviance")
+par(mfrow = c(2,2))
+plot(blad$number, fit_res, xlab = "Number", ylab = "Deviance Residuals")
+plot(predict(fit_co3), fit_res, xlab = "risk score", ylab = "Deviance Residuals")
+qqnorm(fit_res, xlab = "N(0,1) Quantiles", ylab = "Deviance Residuals")
+abline(0,1,col = 2)
+```
+
+```{=latex}
+From the model above, we know n= 86, number of events= 47, so we have 39 censoring here, the censoring rate is 39/86 = 0.4534884 > 0.4. This means a large number of residuals are close to 0, which distorts the N (0,1) distribution shape. But residuals should still mostly fall between [-2,2], and be roughly symmetric in range. From our first two plot, we can see although most of data are between [-2,2], but it is not symmetric. Therefore, both plot does not roughly follow a N (0,1) shaped distribution. From the Q-Q plot, we can also see the data do not have a linear pattern. Therefore, the residual are not normally distributed.\\
+
+To conclude, the model with number variable only (model 3) have the best performance, but the Deviance Residuals does not shows a N(0,1) pattern. Therefore, the Cox model may not fit the data very well. From the model coefficient, we can see the coefficient for number is 0.20120, this represent log hazard ratio of patient gets 1 more tumor at the initial time. exp(0.20120) = 1.222869. this represent hazard ratio for patients get 1 more tumor at the initial time. In this dataset, there are 51 patients with 1 tumor initially, 11 with 2 tumors, 10 with 3 tumors, 4 with 4 tumors, 5 with 5 tumors, 2 with 6 tumors and 3 with 8 tumors. This means we need to increase the study size if number is the variable we are interested in. we could draw the KM plot for numbers to see the difference, but without a adequate sample size, the plot may not give use the right information.\\
+```
+
+\newpage
+## Question 4
+
+```{=latex}
+a) In this question, we have more than 2 groups, so we can set the null hypothesis as there are no difference at all among the groups, that is $H_0: S_1(t) = S_2(t) = S_3(t)$. Then the alternative hypothesis is $H_A$: there is at least one group has different S(t). 
+```
+
+```{r, echo=F}
+BM <- read.table("BoneMarrowDFTime.txt", header = T)
+fit_lr <- survdiff(Surv(DFtime, DFstatus) ~ as.factor(Group), data = BM)
+fit_lr
+```
+```{=latex}
+From the above result, we can see the $W_{obs}^2 \approx \chi_2^2 = 13.8$ that is $W_{obs}^2$ follows a chisq distribution with degree of freedom equals 2. The p-vale is 0.001 < 0.05 which means we can reject the null hypothesis and there is at least 1 disease group has different S(t).\\
+
+b) we can now fit cox model to our dataset, group will be the test variable
+```
+
+```{r, echo=F}
+cox_bm <- coxph(Surv(DFtime, DFstatus) ~ as.factor(Group), data = BM)
+summary(cox_bm)
+```
+
+From the above summary, we can see that group 2 has a p-value 0.0457 < 0.05 which means we can rehect the null hypothesis. We can also see, the wald test is less than 0.05, so group 2 is statistical different from group1. Group 2 has a p-value 0.1516 which means we can not reject the null hypothesis and group 3 is same as group1. Therefore, the result from Cox regression model suggest that the 3 group are not the same. Next, we need to perform a residual analysis. In this case, we are using Schoenfeld residual.
+
+```{r, echo=F, fig.height=3}
+resid.sch=residuals(cox_bm,type="schoenfeld")
+t=sort(BM$DFtime[BM$DFstatus==1])
+par(mfrow=c(1,2))
+plot(t,resid.sch[,1],ylab="Schoenfeld residual", xlab="Time", main = "Group 2")
+plot(t,resid.sch[,2],ylab="Schoenfeld residual", xlab="Time", main = "Group 3")
+```
+
+From the above two plot, we can see the Schoenfeld residual satisfies the PH assumption 
+
+```{r, echo=F, fig.height=3}
+resid.scaledsch=residuals(cox_bm, type="scaledsch")
+zph=cox.zph(cox_bm,terms=F)
+par(mfrow=c(1,2))
+plot(zph)
+```
+
+From the sacled Schoenfeld residual plot, we can see the residuals does not show a time trend and this satisfied the PH assumption.
+
+```{r, echo=FALSE}
+print(zph)
+```
+This part shows the p-value for each groups, all p-value in this individual test are greater than 0.05, therefore, we can not reject the null hypothesis $(H_0 : \theta_2 = 0$ and $H_0 : \theta_3 = 0)$, and the Schoenfeld residual is not correlated with time which satisfied the PH assumption. The global p-value is 0.25 > 0.05, this means we can not reject the null hypothesis $(H_0 : \theta_2 = \theta_3 = 0)$ also suggest the Schoenfeld residual is not correlated with time, and this satisfied the PH assumption. In conclusion, we can say the cox model fits well becasue the residual test satisfied the PH assumption.
+
+```{r, echo = F, fig.height=6}
+Group <- BM$Group
+g1 <- survfit(cox_bm, newdata = data.frame(Group=1))
+g2 <- survfit(cox_bm, newdata = data.frame(Group=2))
+g3 <- survfit(cox_bm, newdata = data.frame(Group=3))
+plot(g1, conf.int = F, xlab = "time", ylab = "Estimated H(t)", col = 1)
+lines(g2, conf.int = F, lty = 1, col = 2)
+lines(g3, conf.int = F, lty =1, col = 3)
+
+fit_kmb <- survfit(Surv(DFtime, DFstatus) ~ as.factor(Group), data = BM)
+lines(fit_kmb, lty = c(2,2,2), col = 1:3)
+
+legend("topright", c("cox_group1", "cox_group2", 
+                     "cox_group3", "km_group1",  "km_group2",  "km_group3"), 
+       lty = c(1,1,1,2,2,2), col = 1:3)
+```
+
+From the KM vs Cox plot, we can see the patterns are very similar between two methods. In group 1, all the pattern are similar. In group 2, there are some small difference between time 200-800 and after 2200. In group 3, the km method has high H(t) at the end and lower H(t) at beginning. however, all the difference are small. Therefore, the Cox model agree with the KM curve, and we can conclude the Cox model fits well for this data.
+
+c) We can get all the beta value from the previous Cox model we build. 
+
+```{r, echo=F}
+summary(cox_bm)
+```
+
+```{=latex}
+As we know from the lecture, $\widehat{S(t|z)} = [\widehat{S_0(t)}^{e^{(\hat{\beta}^T Z)}}]$, and from the question, we know for group 1, then we have $S(t) = \hat{S_0}(t)$. For group 2 and 3, we can simply plug the $\beta$ value in the equation, then we have:\\
+
+\begin{align*}
+    Group1 &: S(t) = \hat{S_0}(t)\\
+    Group2 &: S(t) = \hat{S_0}(t)^{exp{(-0.5742*I(Group=2))}}\\
+    Group3 &: S(t) = \hat{S_0}(t)^{exp{(0.3834*I(Group=3))}}
+\end{align*}\\
+```
+
+\newpage
+## Appendix
+
+### Q2
+
+a)
+
+```{r, eval=F}
+library(survival)
+data <- read.table("p42.txt", header = T)
+fit <- survfit(Surv(time, status)~as.factor(AG), data = data)
+plot(fit, conf.int = F, mark.time = T, xlab = "Weeks", 
+     ylab = "Survival Probability", col = 1:2)
+legend("topright", c("negative", "positive"), col = 1:2, lty=1:1)
+
+delta<-data$status
+x<-data$time
+wbc<-data$wbc
+par(mfrow = c(2,2))
+#scatter plot for wbc
+plot(wbc[delta==1],log(x[delta==1]),pch=4,xlab="white blood cell count",
+     ylab="log survival time",main="log time vs wbc")
+points(wbc[delta==0],log(x[delta==0]),pch=1)
+legend(70,1,c("f","c"),pch=c(4,1))
+
+plot(log(wbc[delta==1]),log(x[delta==1]),pch=4,xlab="white blood cell count",
+     ylab="log survival time",main="log time vs log wbc")
+points(wbc[delta==0],log(x[delta==0]),pch=1)
+legend(1,1,c("f","c"),pch=c(4,1))
+
+plot(wbc[delta==1]^2,log(x[delta==1]),pch=4,xlab="white blood cell count",
+     ylab="log survival time",main="log time vs wbc^2")
+points(wbc[delta==0],log(x[delta==0]),pch=1)
+legend(8000,1,c("f","c"),pch=c(4,1))
+
+plot(exp(wbc[delta==1]),log(x[delta==1]),pch=4,xlab="white blood cell count",
+     ylab="log survival time",main="log time vs exp wbc")
+points(wbc[delta==0],log(x[delta==0]),pch=1)
+legend("center",c("f","c"),pch=c(4,1))
+```
+
+b)
+
+```{r, eval=F}
+fit1 <- survreg(Surv(time, status)~as.factor(AG) + log(wbc), data = data)
+summary(fit1)
+
+fit2 <- survreg(Surv(time, status)~as.factor(AG), data = data)
+summary(fit2)
+
+fit3 <- survreg(Surv(time, status)~log(wbc), data = data)
+summary(fit3)
+```
+
+c)
+
+```{r, eval=F}
 AG <-data$AG
 wbc <- data$wbc
 x <- data$time
@@ -131,88 +470,102 @@ plot(log(wbc),r,pch=16,xlab="log(wbc)"
      ,ylab="Residuals",main="Cox-Snell Residuals: leukemia patients")
 lines(seq(-1,6),rep(1,8),lty=2)
 legend("topleft","mean of exp(1)",lty = 2)
-```
 
-The Cox-Snell residual plot has expected behavior, and look like exp(1) observation. therefor, model 1 fits pretty well.
-
-```{r, echo = F}
 fitr <- survfit(Surv(r1,delta)~1)
-plot(fitr, fun="cumhaz", conf.int = F, xlab = "Residual r", ylab = "K-M estimate H(r)", main = "estimated H(r) from Original Cox-Snell residuals")
+plot(fitr, fun="cumhaz", conf.int = F, xlab = "Residual r", 
+     ylab = "K-M estimate H(r)", 
+     main = "estimated H(r) from Original Cox-Snell residuals")
 lines(0:4, 0:4, col = 2)
-
 ```
 
-From the K-M estimated H(r) from original Cox-Snell residual plot, we can see the trend is similar to y = x. This suggest that our model 1 fits the data pretty well.
+d)
 
-d) Our final model is model 1, the summary is shown as below:
-
-```{r, echo=F}
+```{r, eval=F}
 summary(fit1)
 ```
 
-```{=latex}
-The final model has formula of\\
-\begin{align*}
-    log(time) &= 3.841 + 1.177*I(AG = 1) - 0.366*log(wbc)
-\end{align*}\\
+### Q3
 
-In this model, we have $\hat{\beta_0}, \hat{\beta_1}, \hat{\beta_2}$.\\
-
-$\hat{\beta_0} = 3.841$ when AG is negative and wbc cell count at diagnosis is 0. The average failure time is 3.841-E[EV(0,1)] = 3.841 - 0.577 = 3.264. In here, the $\hat{\beta_0}$ contains both expected log failure time and the expectation of EV(0,1).\\
-
-$\hat{\beta_1} = 1.177$, this means if we assume log(wbc) stays the same, then, when AG test is positive (AG = 1), the log failure time will increase by 1.177 unit compare to negative AG test.  
-
-$\hat{\beta_2} = -0.366$, this means if we assume AG stays the same, then, 1 unit log(wbc) increase will decrease the log failure time by 0.366 unit.
-```
-
-\newpage
-## Question 3
-
-The original file has multiple recurrence for each patients, and some patients has no recurrence, so we need to clean the file first, then we can read the data into data frame. After cleaning the data, we have the data looks like below
-
-```{r, echo=F}
+```{r, eval=F}
 library(dplyr)
-blad <- read.table("bladder.txt", col.names = c("Group", "fultime", "number", "size", "time", "r2", "r3", "r4"), fill = T, na.strings = "", header = F)
+blad <- read.table("bladder.txt", col.names = c("Group", "fultime", 
+                                                "number", "size", "time", 
+                                                "r2", "r3", "r4"), 
+                   fill = T, na.strings = "", header = F)
 blad <- blad[,1:5]
 blad$status <- ifelse(is.na(blad$time), 0,1)
 blad <- blad %>% 
     mutate(time = coalesce(time,fultime))
 head(blad)
-```
 
-Now we can draw a KM plot for our data.
-
-```{r}
 fit_km <- survfit(Surv(time, status)~as.factor(Group), data = blad)
-plot(fit_km, conf.int = F, mark.time = T, xlab = "time(months)", ylab = "Survival Probability", col = 1:2, main = "Bladder cancer KM plot")
+plot(fit_km, conf.int = F, mark.time = T, xlab = "time(months)", 
+     ylab = "Survival Probability", col = 1:2, main = "Bladder cancer KM plot")
 legend("topright", c("Placebo group", "Drug group"), lty = 1:1, col = 1:2)
-```
 
-```{r}
 fit_co1 <- coxph(Surv(time, status)~as.factor(Group)+number+size, data = blad)
 summary(fit_co1)
 fit_co1$loglik
-```
 
-```{r}
 fit_co2 <- coxph(Surv(time, status)~as.factor(Group)+number, data = blad)
 summary(fit_co2)
 fit_co2$loglik
 pchisq(2*(180.4023 - 180.1783), 1, lower.tail = F)
-```
 
-```{r}
 fit_co3 <- coxph(Surv(time, status)~number, data = blad)
 summary(fit_co3)
 fit_co3$loglik
 pchisq(2*(181.7882 - 180.4023), 1, lower.tail = F)
-```
 
-```{r}
 fit_res <- resid(fit_co3, type = "deviance")
 par(mfrow = c(2,2))
 plot(blad$number, fit_res, xlab = "Number", ylab = "Deviance Residuals")
 plot(predict(fit_co3), fit_res, xlab = "risk score", ylab = "Deviance Residuals")
 qqnorm(fit_res, xlab = "N(0,1) Quantiles", ylab = "Deviance Residuals")
 abline(0,1,col = 2)
+```
+
+### Q4
+
+a)
+
+```{r, eval=F}
+BM <- read.table("BoneMarrowDFTime.txt", header = T)
+fit_lr <- survdiff(Surv(DFtime, DFstatus) ~ as.factor(Group), data = BM)
+fit_lr
+```
+
+b)
+
+```{r, eval=F}
+cox_bm <- coxph(Surv(DFtime, DFstatus) ~ as.factor(Group), data = BM)
+cox_bm
+summary(cox_bm)
+
+resid.sch=residuals(cox_bm,type="schoenfeld")
+t=sort(BM$DFtime[BM$DFstatus==1])
+par(mfrow=c(1,2))
+plot(t,resid.sch[,1],ylab="Schoenfeld residual", xlab="Time")
+plot(t,resid.sch[,2],ylab="Schoenfeld residual", xlab="Time")
+
+resid.scaledsch=residuals(cox_bm, type="scaledsch")
+zph=cox.zph(cox_bm,terms=F)
+par(mfrow=c(1,2))
+plot(zph)
+print(zph)
+
+Group <- BM$Group
+g1 <- survfit(cox_bm, newdata = data.frame(Group=1))
+g2 <- survfit(cox_bm, newdata = data.frame(Group=2))
+g3 <- survfit(cox_bm, newdata = data.frame(Group=3))
+plot(g1, conf.int = F, xlab = "time", ylab = "Estimated H(t)", col = 1)
+lines(g2, conf.int = F, lty = 1, col = 2)
+lines(g3, conf.int = F, lty =1, col = 3)
+
+fit_kmb <- survfit(Surv(DFtime, DFstatus) ~ as.factor(Group), data = BM)
+lines(fit_kmb, lty = c(2,2,2), col = 1:3)
+
+legend("topright", c("cox_group1", "cox_group2", 
+                     "cox_group3", "km_group1",  "km_group2",  "km_group3"), 
+       lty = c(1,1,1,2,2,2), col = 1:3)
 ```
