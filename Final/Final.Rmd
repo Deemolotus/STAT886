@@ -30,7 +30,7 @@ To begin with, we want to see the distribution of each covariate and get a sense
 ## **Preliminary analysis**
 
 ```{=latex}
-The 'br\_surv' data has 300 observations with 18 feature vectors of interest (excluding ID, time, and status). First, we would like to see how much missing data there are in the dataset. after calculation, we found that there are 2 missing data points in both meno and global categories and 34 in both nodal and er categories. Because 2 missing data is less than 2%, we will remove the two rows. To deal with the missing data in nodal and er categories, we will first check if those two variables are significant or not.\\
+The 'br\_surv' data has 300 observations with 18 feature vectors of interest (excluding ID, time, and status). First, we would like to see how much missing data there are in the dataset. after calculation, we found that there are 2 missing data points in both meno and global categories and 34 in both nodal and er categories. Because 2 missing data is less than 2\%, we will remove the two rows. To deal with the missing data in nodal and er categories, we will first check if those two variables are significant or not.\\
 
 For all continuous variables in the dataset, including age, timediag, disfree, WBC, granules, and platelets, a scatter plot will be constructed because continuous variables does not have lot missing data. Since the range for x-axis is large, log will be take for each continuous variable to get better view of the data. For categorical data, KM-plot will be generated as this can avoid the effect of missing data. Both method will be use to assess the potential association between each covariate (excluding arm) and survival time.  
 ```
