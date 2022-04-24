@@ -61,7 +61,7 @@ mtext(~italic("my caption"), side=1, outer=TRUE, adj=0, line=3)
 ```
 
 ```{=latex}
-From the above scatter plots, we can see age, timediag, WBC, and gran seem to have negative association with survival time. The variable disfree, platelet seems to have very week association with survival time. Therefore, we can not eliminate any of the variable for our future analysis.
+From the above scatter plots, we can see age, timediag, WBC, and gran seem to have a negative association with survival time. The variable disfree, platelet seems to have a very weak association with survival time. Therefore, we can not eliminate any of the variables for our future analysis.
 ```
 
 ```{r, echo=F, message=F, warning=F}
@@ -81,7 +81,7 @@ knitr::include_graphics("KMm.png")
 ```
 
 ```{=latex}
-From the KM-plots above, we can see perform, meno, adv, chemmet. regimen and numsites seems to have big impact on survival time. other variables seems not have strong impact. To check the difference, log-rank and wilcoxon test will be performed to check which variables are significant.
+From the KM-plots above, we can see perform, meno, adv, chemmet. regimen and numsites seem to have a big impact on survival time. other variables seem not to have a strong impact. To check the difference, the log-rank and Wilcoxon test will be performed to check which variables are significant.
 ```
 
 ```{r willcoxon test, echo=F}
@@ -161,9 +161,9 @@ br_surv <- subset(br_surv, select=-c(nodal,er))
 ```
 
 ```{=latex}
-From the wilcoxon and log-rank test, we can see perform, meno, numsites, adv, chemmet and regimen are statistically significant. Other variables are not statistically significant. For nodal and er, both wilcoxon and log-rank test have a p-value larger than 0.05 indicates they are important, so we can remove the two coulmn form our dataset. Interstingly, chemmet and regimen has exactly the same value in the dataset, but we will keep both variable for further analysis.\\
+From the Wilcoxon and log-rank test, we can see perform, meno, numsites, adv, chemmet and regimen are statistically significant. Other variables are not statistically significant. For nodal and er, both Wilcoxon and log-rank test have a p-value larger than 0.05 indicating they are important, so we can remove the two columns from our dataset. Interestingly, chemmet and regimen have exactly the same value in the dataset, but we will keep both variables for further analysis.\\
 
-Next, we will use KM-plot to get a sense of the data. Then Parametric model will be included in plot to see which Parametric model has best fit for our data. Weibull, Exponetial and lognormal distribution were used in here. To assess the effect of arm, both Parametric and non-parametric comparison will be performed. The best fit Parametric model will be used for arm comparison. 
+Next, we will use KM-plot to get a sense of the data. Then Parametric model will be included in the plot to see which Parametric model has the best fit for our data. Weibull, Exponential, and lognormal distribution were used here. To assess the effect of the arm, both a Parametric and non-parametric comparison will be performed. The best fit Parametric model will be used for arm comparison.
 ```
 
 ```{r km_exploriation, echo = F}
@@ -206,7 +206,7 @@ legend("bottomleft", c("Kaplan-Meier", "Weibull", "Exponential", "lognormal"),
 ```
 
 ```{=latex}
-Here, we can see all three Parametric model fits resonablely well. However, the Weilbull model does not fit well between t=500 to 650, and after t=1000. For exponential mode, the survival probability were under-estimated befor t = 400, and over-estimated between t=500 to 1200. The lognormal model seems to fits better becasue it has more closer shape as the KM-plot. To test the fit, p-p plot will be used here.
+Here, we can see all three Parametric model fits reasonably well. However, the Weibull model does not fit well between t=500 to 650, and after t=1000. For exponential mode, the survival probability was under-estimated before t = 400, and over-estimated between t=500 to 1200. The lognormal model seems to fits better because it has a more closer shape than the KM-plot. To test the fit, a p-p plot will be used here.
 ```
 
 ```{r, echo=F}
@@ -226,7 +226,7 @@ lines(seq(0,1,0.1),seq(0,1,0.1), lty=2, col=2)
 ```
 
 ```{=latex}
-From teh above P-P plot, we can see both exponential and Weibull distribution does not fit the data well in the middle part. lognormal model has more data lay on the line which menas the lognormal model has the best fit. Therefore, we will use lognormal model and non-Parametric model to assess the effect of arm. 
+From the above P-P plot, we can see both exponential and Weibull distributions do not fit the data well in the middle part. the lognormal model has more data lay on the line which means the lognormal model has the best fit. Therefore, we will use the lognormal model and non-Parametric model to assess the effect of arm.
 ```
 
 ## **Model Fitting and Analysis**
@@ -267,7 +267,7 @@ $\mu$             & 0.1607637             & 0.69       \\ \hline
 ```
 
 ```{=latex}
-After computing, $\Lambda$ for LR test for $\phi$ is 0.28 which corespond with the p-value equals to $0.59 > 0.05$. This means we can not reject the null hypothesis and therefore $\sigma_1 = \sigma_2$. Then $\Lambda$ for LR test for $\mu$ is 0.16 which corespond with the p-value equals to $0.69 > 0.05$. This means we can not reject the null hypothesis and therefore $\mu_1 = \mu_2$. By combining the results, we can conclude that both groups have the same distribution, and there is a high probability that there is no difference in survival distributions between the two groups.\\
+After computing, $\Lambda$ for LR test for $\phi$ is 0.28 which correspond with the p-value equals to $0.59 > 0.05$. This means we can not reject the null hypothesis and therefore $\sigma_1 = \sigma_2$. Then $\Lambda$ for LR test for $\mu$ is 0.16 which correspond with the p-value equals to $0.69 > 0.05$. This means we can not reject the null hypothesis and therefore $\mu_1 = \mu_2$. By combining the results, we can conclude that both groups have the same distribution, and there is a high probability that there is no difference in survival distributions between the two groups.\\
 
 \textbf{Non-Parametric Comparison}: To perform a non-parametric analysis, we will first assume that the data is in the form of $f(x_i; \delta_i) : i = 1, ..., 296$ and test on the null hypothesis which is $H0 : S_1(t) = S_2(t)$. Here we have 296 data points because we removed 4 patients form the dataset due to missing data.
 ```
@@ -301,13 +301,13 @@ knitr::kable(result)
 ```
 
 ```{=latex}
-In here, we have a KM-plot for different arm, the yellow line indicates arm = 0 which is Doxorubicin alone group , and the blue line indicates arm = 1 which is Vinorelbine combined with Doxorubicin group. From the plot, we can see most of the confidence interval for both group are largely overlapped. This indicates that the two group may not have difference which means the treatments may not have large impact. However, we can see there are more censoring in arm 1.\\
+Here, we have a KM-plot for different arms, the yellow line indicates arm = 0 which is Doxorubicin alone group, and the blue line indicates arm = 1 which is Vinorelbine combined with the Doxorubicin group. From the plot, we can see most of the confidence intervals for both groups are largely overlapped. This indicates that the two groups may not have a difference which means the treatments may not have a large impact. However, we can see there is more censoring in arm 1.\\
 
-As from the table above, we can see both weighted log-rank test and wilcoxon test gives p-value greater tah 0.05 which means we can not reject the null hypothesis. Becasue there are a lot of slight crossing between the two groups, we can accept the null hypothesis which is both group have the same distribution.\\
+From the table above, we can see both the weighted log-rank test and Wilcoxon test give a p-value greater than 0.05 which means we can not reject the null hypothesis. Because there is a lot of slight crossing between the two groups, we can accept the null hypothesis which is both groups have the same distribution.\\
 
-To conclude, both Parametric and non-Parametric comparison shows the arm(treatment) may not have impact on the survival without comsidering other covariates.\\
+To conclude, both Parametric and non-Parametric comparison shows the arm(treatment) may not have an impact on the survival without considering other covariates.\\
 
-The next step is to use AFT model to perform a parametric regression analysis.\\
+The next step is to use the AFT model to perform a parametric regression analysis.\\
 ```
 
 ### Parametric Regression Analysis (AFT model)
@@ -327,8 +327,8 @@ To evaluate the potential effects of treatments, a number of models will be used
   \item repeat the procedure to find a model with smallest AIC. 
 \end{itemize}
 
-Another backward selection was also used following the same procedure as above where arm is the necessary variable in the model.\\
-After those procedure, we have two models, one have all important covariants without arm, and another have all important covariants with arm. For the model with arm, we will check the p-value for all included covariates, if the p-value is greater than 0.05, we will exclude them from the model and check if the new model is better than the old model or not. 
+Another backward selection was also used following the same procedure as above where the arm is the necessary variable in the model.\\
+After those procedures, we have two models, one has all important covariants without the arm, and another has all important covariants with the arm. For the model with arm, we will check the p-value for all included covariates, if the p-value is greater than 0.05, we will exclude them from the model and check if the new model is better than the old model or not. 
 ```
 
 ```{r AFT, echo=F}
@@ -374,7 +374,7 @@ aft23 <- survreg(formula = Surv(time, status) ~ as.factor(arm) + age
 ```
 
 ```{=latex}
-Above is the minimium AIC and BIC for each model, we can see the model without arm has AIC less that the model with arm. this indicates that the arm(treatment) may not have much impact on the model. However, we need to check the p-value before we make conclusion.
+Above are the minimum AIC and BIC for each model, we can see the model without arm has AIC less that the model with arm. this indicates that the arm(treatment) may not have much impact on the model. However, we need to check the p-value before we make a conclusion.
 ```
 
 ```{r, echo=F, fig.align='center', out.width="100%"}
@@ -393,7 +393,7 @@ knitr::kable(df)
 ```
 
 ```{=latex}
-From the above result, we can see the reported coef are almost the same and the included covariates are exactly the same (exclude arm) between the without arm model and with arms model, indicating the arm may not actually do anything. Because the purpose of this analysis is to investigate the arm variable, so we will include the arm in our model. Then from figure 4, we can see measure and platelet variables have a p-value greater than 0.05, so we exclude those two variables in our model. To check whether the new model is better than the intercept-only model and the arm model, we will use the log-rank test. The null hypothesis for comparing to intercept only model is $h_0: \beta_{all} = 0$, because the p-value is way less than 0.05, so we can reject the null hypothesis and conclude that there is at least 1 $\beta$ has a non-zero value. To compare the arm model and the new model, the null hypothesis is with the arm model is as good as the new model. Because the p-value is greater than 0.05, we can not reject the null hypothesis. Then we can conclude with the arm model is as good as the new model, and we will simply choose the new model because it is a simpler model.\\
+From the above result, we can see the reported coef are almost the same and the included covariates are exactly the same (exclude arm) between them without arm model and with arms model, indicating the arm may not actually do anything. Because the purpose of this analysis is to investigate the arm variable, so we will include the arm in our model. Then from figure 4, we can see measure and platelet variables have a p-value greater than 0.05, so we exclude those two variables in our model. To check whether the new model is better than the intercept-only model and the arm model, we will use the log-rank test. The null hypothesis for comparing to intercept only model is $h_0: \beta_{all} = 0$, because the p-value is way less than 0.05, so we can reject the null hypothesis and conclude that there is at least 1 $\beta$ has a non-zero value. To compare the arm model and the new model, the null hypothesis is with the arm model is as good as the new model. Because the p-value is greater than 0.05, we can not reject the null hypothesis. Then we can conclude with the arm model is as good as the new model, and we will simply choose the new model because it is a simpler model.\\
 
 Now, we have our final model, and we will do a Cox-Snell residual test for the model.
 ```
@@ -437,9 +437,9 @@ legend("topleft","Mean of Exp(1)",lty=2)
 ```
 
 ```{=latex}
-From the cox-snell plots for all relavent covarients, we can see most of the expected value are less 6 which means AFT model selection may works well. However, for arm, timdiag, age, and globel, the dots are not looks like random observation from exp(1). Therefore, AFT mdoel selection may not be a very good choice for this dataset.\\
+From the cox-snell plots for all relevant covariates, we can see most of the expected values are less than 6 which means AFT model selection may work well. However, for arm, timdiag, age, and global, the dots do not look like random observations from exp(1). Therefore, AFT model selection may not be a very good choice for this dataset.\\
 
-Next, we want to try the semi-parapetric model for thsi dataset. Cox regression model will be used in here.
+Next, we want to try the semi-parametric model for this dataset. The Cox regression model will be used here.
 ```
 
 ### Cox regression model
@@ -449,8 +449,8 @@ A Cox regression model is one of the most commonly used approaches to modeling c
 \begin{align*}
   h(t|z_i) &= h_0(t) exp(\beta^T z)
 \end{align*}\\
-where z is a covariate vector (p-dimensional), $\beta$ is a vector of regression coefficients and $h_0(t)$ is the baseline hazed function.\\
-For Cox regression model, I will manually choose the best model by drop all the covariate with p-value greater than 0.05 excluding arm variable. The first model will be the full model. In the reported summary, numsites, timdiag, global, chemmet and WBC are statistically significant. However, the p-value for adv variable is just slightly over 0.05 which equals to 0.052, so I decide to include this variable as well. Then model 2 includes arm, numsites, timdiag, adv, global, chemmet and WBC. Becasue adv is not statistically significant, so model 3 will be created without adv variable. Then log-rank comparison were conducted to see which model is better.
+where z is a covariate vector (p-dimensional), $\beta$ is a vector of regression coefficients, and $h_0(t)$ is the baseline hazed function.\\
+For the Cox regression model, I will manually choose the best model by dropping all the covariates with a p-value greater than 0.05 excluding the arm variable. The first model will be the full model. In the reported summary, numsites, timdiag, global, chemmet, and WBC are statistically significant. However, the p-value for the adv variable is just slightly over 0.05 which equals 0.052, so I decided to include this variable as well. Then model 2 includes arm, numsites, timdiag, adv, global, chemmet, and WBC. Because adv is not statistically significant, model 3 will be created without the adv variable. Then log-rank comparisons were conducted to see which model is better.
 ```
 
 ```{r cox, echo=F}
@@ -485,7 +485,7 @@ knitr::kable(df)
 ```
 
 ```{=latex}
-From the log-rank test, we can see the p-value is 0.64>0.05, so we can not reject the null hypothesis and conclude that model 1 is just as good as model 2. When compare mode 2 with model 3, we have p-value equals to 0.03 < 0.05 which means we can rejcet the null hypothesis and conclude that model 3 is not as good as model 2. Therefore, our final model will be model 2.
+From the log-rank test, we can see the p-value is 0.64>0.05, so we can not reject the null hypothesis and conclude that model 1 is just as good as model 2. When comparing model 2 with model 3, we have a p-value equal to 0.03 < 0.05 which means we can reject the null hypothesis and conclude that model 3 is not as good as model 2. Therefore, our final model will be model 2.
 ```
 
 ```{r, echo=F}
@@ -497,8 +497,8 @@ The above is a summary of model 2, we can see all the included covariate has sig
 with Doxorubicin relative to Doxorubicin alone is 0.0237 which suggest that the Vinorelbine combined
 with Doxorubicin group has higher survival probability comapre to Doxorubicin only group. To check the model visually, estimation plot was created as below. The included line include BLACK: (WBC = wbc,timdiag = timdiag,global = global,numsites = 3, arm = 1, adv = 1, chemmet = 1), RED: (WBC = wbc,timdiag = timdiag,global = global,numsites = 3, arm = 0, adv = 1, chemmet = 1), GREEN: (WBC = wbc,timdiag = timdiag,global = global,numsites = 3, arm = 0, adv = 1, chemmet = 0), DARK BLUE: (WBC = wbc,timdiag = timdiag,global = global,numsites = 3, arm = 1, adv = 1, chemmet = 0), BLUE: (WBC = wbc,timdiag = timdiag,global = global,numsites = 2, arm = 0, adv = 1, chemmet = 0), PURPLE: (WBC = wbc,timdiag = timdiag,global = global,numsites = 2, arm = 1, adv = 1, chemmet = 0).\\
 
-I choose those value becasue most people have numsites = 2 or 3, and chemmet is most significant covariate in our model. Also, we want comapre the treatment, so we have 6 line in toatl. WBC, timdiag, global covariatea are scattered with no obvious patterns therefore mean is taken. It is clear that chemmet and numsites have great impact on post-progression survival time (line3-6) as the lines are high above. Then we can compare
-horizontally(arm = 1 vs arm = 0), the line with arm = 0 is always above the line with arm = 1. This means the Doxorubicin only group generally does better in surviving the breast cancer.\\
+I choose those values because most people have numsites = 2 or 3, and chemmet is the most significant covariate in our model. Also, we want to compare the treatment, so we have 6 lines in total. WBC, timdiag, and global covariates are scattered with no obvious patterns therefore mean is taken. It is clear that chemmet and numsites have a great impact on post-progression survival time (line3-6) as the lines are high above. Then we can compare
+horizontally(arm = 1 vs arm = 0), the line with arm = 0 is always above the line with arm = 1. This means the Doxorubicin-only group generally does better in surviving breast cancer.\\
 ```
 
 ```{r cox_estimation, echo=F}
@@ -580,7 +580,7 @@ print(zph)
 ```
 
 ```{=latex}
-From the Schoenfeld Residual plots we can see some variable has time trend. However, no significant time trends observed for global test(0.234). Therefore, the PH assumption is valid. we can then conclude the Cox model fits reasonably well for this dataset. 
+From the Schoenfeld Residual plots, we can see some variable has a time trend. However, no significant time trends were observed for the global test(0.234). Therefore, the PH assumption is valid. we can then conclude the Cox model fits reasonably well for this dataset.
 ```
 
 ## Conclusion
